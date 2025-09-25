@@ -4,9 +4,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Coins, Users, Clock } from "lucide-react"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import Link from "next/link"
 import Image from "next/image"
+import { CategoryButtonsSkeleton } from "@/components/skeletons/category-buttons-skeleton"
+import { BountryCategory } from "./types"
 
 const mockBounties = [
   {
@@ -102,14 +104,30 @@ const mockBounties = [
 ]
 
 export default function Home() {
-    const [selectedCategory, setSelectedCategory] = useState("All Categories")
-
-  const categories = ["All Categories", "Social", "Creative", "Technical", "Community"]
+  const [categories, setCategories] = useState<string[]>(["All Categories"])
+  const [categoriesLoading, setCategoriesLoading] = useState(true)
+  const [selectedCategory, setSelectedCategory] = useState("All Categories")
 
   const filteredBounties =
     selectedCategory === "All Categories"
       ? mockBounties
       : mockBounties.filter((bounty) => bounty.category === selectedCategory)
+
+  const fetchCategories = async () => {
+    try {
+      const data = await (await fetch("/api/categories")).json()
+      const categoriesName = data.categories.map((cat: { name: BountryCategory }) => cat.name)
+      setCategories(["All Categories", ...categoriesName])
+    } catch (err) {
+      console.error("Failed to fetch categories", err)
+    } finally {
+      setCategoriesLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchCategories()
+  }, [])
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#1c398e]/20 to-[#1c398e]/10">
@@ -136,21 +154,25 @@ export default function Home() {
           <div className="flex items-center justify-between mb-6 gap-5">
             <h3 className="text-2xl font-bold text-[#1c398e]">Active Bounties</h3>
             <div className="flex flex-wrap gap-2 justify-end">
-              {categories.map((cat) => (
-                <Button
-                  key={cat}
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setSelectedCategory(cat)}
-                  className={
-                    selectedCategory === cat
-                      ? "bg-[#fdc700] text-[#1c398e] border-[#fdc700] font-bold"
-                      : "hover:bg-[#fdc700]/20 text-[#1c398e]"
-                  }
-                >
-                  {cat}
-                </Button>
-              ))}
+              {
+                categoriesLoading ? (
+                  <CategoryButtonsSkeleton />
+                ) : (
+                  categories.length > 0 && categories.map((cat) => (<Button
+                    key={cat}
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setSelectedCategory(cat)}
+                    className={
+                      selectedCategory === cat
+                        ? "bg-[#fdc700] text-[#1c398e] border-[#fdc700] font-bold"
+                        : "hover:bg-[#fdc700]/20 text-[#1c398e]"
+                    }
+                  >
+                    {cat}
+                  </Button>))
+                )
+              }
             </div>
           </div>
 

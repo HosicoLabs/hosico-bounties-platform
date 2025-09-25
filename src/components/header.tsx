@@ -4,9 +4,11 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { WalletDropdown } from "./wallet-dropdown"
 import Image from "next/image"
+import { useAdmin } from "./admin/use-admin"
 
 export function Header() {
   const pathname = usePathname()
+  const { isAdmin } = useAdmin()
 
   return (
     <header className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-50">
@@ -44,15 +46,20 @@ export function Header() {
             </Link>
           </li>
 
-          <li>
-            <Link
-              href="/admin"
-              className={`transition-colors duration-200 hover:text-[#ff6900] ${pathname === "/admin" ? "text-[#ff6900] font-bold" : "text-[#1c398e]"
-                }`}
-            >
-              Admin
-            </Link>
-          </li>
+          {
+            isAdmin ? (
+              <li>
+                <Link
+                  href="/admin"
+                  className={`transition-colors duration-200 hover:text-[#ff6900] ${pathname === "/admin" ? "text-[#ff6900] font-bold" : "text-[#1c398e]"
+                    }`}
+                >
+                  Admin
+                </Link>
+              </li>
+            ) : ""
+          }
+
         </ul>
 
         <div className="hidden md:flex items-center gap-4">
