@@ -8,44 +8,16 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
-import { Eye, Trash2, Plus, X } from "lucide-react"
+import { Plus, X } from "lucide-react"
 import { useAdmin } from "@/components/admin/use-admin"
 import { useBounties } from "@/components/bounties-provider"
 import { cn } from "@/lib/utils"
-
-const activeBounties = [
-  {
-    id: 1,
-    title: "Create Hosico Meme Contest",
-    submissions: 12,
-    reward: "1,000 HOSICO",
-    status: "Active",
-    endDate: "2024-01-15",
-  },
-  {
-    id: 2,
-    title: "Solana DeFi Integration Guide",
-    submissions: 3,
-    reward: "5,000 HOSICO",
-    status: "Active",
-    endDate: "2024-01-20",
-  },
-]
+import { BountyCard } from "@/components/bounty-card"
+import { BountyCardSkeleton } from "@/components/skeletons/bounty-card-skeleton"
 
 export default function AdminPanel() {
   const { isAdmin } = useAdmin()
-  const { categories } = useBounties()
+  const { categories, activeBounties, bountiesLoading, refreshBounties } = useBounties()
 
   const [bountyTitle, setBountyTitle] = useState("")
   const [bountyDescription, setBountyDescription] = useState("")
@@ -61,12 +33,6 @@ export default function AdminPanel() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [isSuccess, setIsSuccess] = useState(false)
-
-  const [activeBountiesState, setActiveBountiesState] = useState(activeBounties)
-
-  const handleDeleteBounty = (bountyId: number) => {
-    setActiveBountiesState((prev) => prev.filter((bounty) => bounty.id !== bountyId))
-  }
 
   const addWinnerPosition = () => {
     const nextPlace = `${bountyPrizes.length + 1}${getOrdinalSuffix(bountyPrizes.length + 1)}`
@@ -141,6 +107,7 @@ export default function AdminPanel() {
       setBountyCategory(null)
       setBountyEndDate("")
       setBountyPrizes([{ place: "1st", prize: "" }, { place: "2nd", prize: "" }, { place: "3rd", prize: "" }])
+      await refreshBounties()
     } catch (err) {
       console.error("Failed to create bounty", err)
     } finally {
@@ -175,63 +142,26 @@ export default function AdminPanel() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {activeBountiesState.map((bounty) => (
-                    <Card key={bounty.id} className="border border-[#1c398e]/20">
-                      <CardContent className="p-6">
-                        <div className="flex items-center justify-between">
-                          <div className="flex-1">
-                            <h3 className="font-semibold text-[#1c398e] mb-2">{bounty.title}</h3>
-                            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
-                              <div>
-                                <span className="text-muted-foreground">Submissions:</span>
-                                <span className="ml-2 font-medium">{bounty.submissions}</span>
-                              </div>
-                              <div>
-                                <span className="text-muted-foreground">Reward:</span>
-                                <span className="ml-2 font-medium text-[#ff6900]">{bounty.reward}</span>
-                              </div>
-                              <div>
-                                <span className="text-muted-foreground">End Date:</span>
-                                <span className="ml-2 font-medium">{bounty.endDate}</span>
-                              </div>
-                            </div>
-                          </div>
-                          <div className="flex space-x-2">
-                            <Button size="sm" variant="outline">
-                              <Eye className="w-4 h-4 mr-1" />
-                              View
-                            </Button>
-                            <AlertDialog>
-                              <AlertDialogTrigger asChild>
-                                <Button size="sm" variant="destructive">
-                                  <Trash2 className="w-4 h-4 mr-1" />
-                                  Delete
-                                </Button>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>Delete Bounty</AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                    Are you sure you want to delete &quot;{bounty.title}&quot;? This action cannot be undone and
-                                    will remove all submissions associated with this bounty.
-                                  </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                  <AlertDialogAction
-                                    onClick={() => handleDeleteBounty(bounty.id)}
-                                    className="bg-red-600 hover:bg-red-700"
-                                  >
-                                    Delete Bounty
-                                  </AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
-                          </div>
+
+                  {
+                    bountiesLoading ? (
+                      <BountyCardSkeleton />
+                    ) : (
+                      activeBounties.length === 0 ? (
+                        <p className="text-center text-muted-foreground bg-gray-100 py-4 px-2 rounded-md">
+                          No active bounties at the moment. Please check back later!
+                        </p>
+                      ) : (
+
+                        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+                          {
+                            activeBounties.map((bounty) => (
+                              <BountyCard key={bounty.id} isAdmin={isAdmin} bounty={bounty} />))
+                          }
                         </div>
-                      </CardContent>
-                    </Card>
-                  ))}
+                      )
+                    )
+                  }
                 </div>
               </CardContent>
             </Card>
@@ -298,7 +228,7 @@ export default function AdminPanel() {
                       </div>
                       <div>
                         <Label htmlFor="duration">Duration (days)</Label>
-                        <Input disabled={isSubmitting} id="duration" placeholder="Enter duration in days" type="date" onChange={(e) => setBountyEndDate(e.target.value)} />
+                        <Input required disabled={isSubmitting} id="duration" placeholder="Enter duration in days" type="date" onChange={(e) => setBountyEndDate(e.target.value)} />
                       </div>
                     </div>
                   </div>

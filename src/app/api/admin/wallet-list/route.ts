@@ -1,6 +1,6 @@
 import { createClient } from "@/utils/supabase/server";
 
-export async function GET(_req: Request) {
+export async function GET() {
     try {
         const supabase = await createClient();
         const { data, error } = await supabase.from("admin-wallet-list").select("wallet_address");

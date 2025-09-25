@@ -190,33 +190,10 @@ const finalizedBounties = [
   },
 ]
 
-const stats = [
-  { label: "Total Bounties", value: "156", icon: Trophy, color: "text-[#ff6900]" },
-  { label: "Active Bounties", value: "9", icon: Clock, color: "text-[#1c398e]" },
-  { label: "Finalized Bounties", value: "147", icon: CheckCircle, color: "text-green-600" },
-  { label: "Total Rewards", value: "125K HOSICO", icon: Coins, color: "text-[#fdc700]" },
-]
-
 export default function BountiesPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#1c398e]/5 to-[#ff6900]/5">
       <main className="container mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          {stats.map((stat, index) => (
-            <Card key={index} className="border-0 shadow-lg bg-white/80 backdrop-blur-sm">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">{stat.label}</p>
-                    <p className={`text-2xl font-bold ${stat.color}`}>{stat.value}</p>
-                  </div>
-                  <stat.icon className={`w-8 h-8 ${stat.color}`} />
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-
         <Tabs defaultValue="active" className="space-y-6">
           <TabsList className="grid w-full grid-cols-2 bg-white/80 backdrop-blur-sm">
             <TabsTrigger value="active" className="data-[state=active]:bg-[#ff6900] data-[state=active]:text-white">

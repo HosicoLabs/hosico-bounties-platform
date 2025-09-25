@@ -15,7 +15,6 @@ export async function POST(req: Request) {
                 end_date: bounty.end_date,
                 category: bounty.category,
                 prizes: bounty.prizes,
-                total_prize: bounty.prizes.reduce((sum, prize) => sum + prize.prize, 0),
             }
         ]);
 
