@@ -4,7 +4,7 @@ import { createClient } from "@/utils/supabase/server";
 export async function POST(req: Request) {
     try {
         const { bounty }: { bounty: Bounty } = await req.json();
-        
+
         const supabase = await createClient();
 
         const { data, error } = await supabase.from("bounties").insert([
@@ -12,13 +12,15 @@ export async function POST(req: Request) {
                 title: bounty.title,
                 description: bounty.description,
                 requirements: bounty.requirements,
-                category_id: bounty.category.id,
-                end_date: bounty.endDate,
+                end_date: bounty.end_date,
+                category: bounty.category,
                 prizes: bounty.prizes,
+                total_prize: bounty.prizes.reduce((sum, prize) => sum + prize.prize, 0),
             }
         ]);
 
         if (error) {
+            console.error("Supabase error:", error);
             return new Response(JSON.stringify({ error: error.message }), { status: 500 });
         }
 

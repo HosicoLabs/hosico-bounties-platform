@@ -3,17 +3,21 @@ import { createClient } from "@/utils/supabase/server";
 export async function GET(_req: Request) {
     try {
         const supabase = await createClient();
-        const { data, error } = await supabase.from("admin-wallet-list").select("wallet_address");
+        const { data, error } = await supabase
+            .from("bounties")
+            .select(`
+                *,
+                category:categories(*)
+            `)
+            .order("created_at", { ascending: false });
 
         if (error) {
             console.error("Supabase error:", error);
             return new Response(JSON.stringify({ error: error.message }), { status: 500 });
         }
 
-        const walletAddressList = data?.map(wallet => wallet.wallet_address) || [];
-
         return new Response(JSON.stringify({
-            walletList: walletAddressList
+            bounties: data
         }), { status: 200 });
     } catch (err) {
         console.error(err)

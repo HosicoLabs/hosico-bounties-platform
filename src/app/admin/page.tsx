@@ -21,6 +21,8 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Eye, Trash2, Plus, X } from "lucide-react"
 import { useAdmin } from "@/components/admin/use-admin"
+import { useBounties } from "@/components/bounties-provider"
+import { cn } from "@/lib/utils"
 
 const activeBounties = [
   {
@@ -43,11 +45,12 @@ const activeBounties = [
 
 export default function AdminPanel() {
   const { isAdmin } = useAdmin()
+  const { categories } = useBounties()
 
   const [bountyTitle, setBountyTitle] = useState("")
   const [bountyDescription, setBountyDescription] = useState("")
   const [bountyRequirements, setBountyRequirements] = useState("")
-  const [bountyCategory, setBountyCategory] = useState("")
+  const [bountyCategory, setBountyCategory] = useState<null | number>(null)
   const [bountyEndDate, setBountyEndDate] = useState("")
   const [bountyPrizes, setBountyPrizes] = useState([
     { place: "1st", prize: "" },
@@ -101,30 +104,24 @@ export default function AdminPanel() {
     try {
       e.preventDefault()
 
-      console.log(
-        bountyTitle,
-        bountyDescription,
-        bountyRequirements,
-        bountyCategory,
-        bountyEndDate,
-        bountyPrizes
-      )
       if (!bountyTitle || !bountyDescription || !bountyRequirements || !bountyCategory || !bountyEndDate || bountyPrizes.length === 0) {
         throw new Error("Please fill in all required fields.")
       }
 
       const formData = JSON.stringify({
-        title: bountyTitle,
-        description: bountyDescription,
-        requirements: bountyRequirements,
-        category: bountyCategory,
-        endDate: bountyEndDate,
-        prizes: bountyPrizes,
+        bounty: {
+          title: bountyTitle,
+          description: bountyDescription,
+          requirements: bountyRequirements,
+          category: bountyCategory,
+          end_date: bountyEndDate,
+          prizes: bountyPrizes,
+        }
       })
 
       setIsSubmitting(true)
 
-      const response = await fetch("/api/admin/create-bounty", {
+      const response = await fetch("/api/admin/bounty/create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: formData,
@@ -135,12 +132,13 @@ export default function AdminPanel() {
         throw new Error(errorData.error || "Failed to create bounty")
       }
 
+      (e.target as HTMLFormElement).reset()
       setIsSuccess(true)
       setError(null)
       setBountyTitle("")
       setBountyDescription("")
       setBountyRequirements("")
-      setBountyCategory("")
+      setBountyCategory(null)
       setBountyEndDate("")
       setBountyPrizes([{ place: "1st", prize: "" }, { place: "2nd", prize: "" }, { place: "3rd", prize: "" }])
     } catch (err) {
@@ -255,6 +253,7 @@ export default function AdminPanel() {
                           id="title"
                           placeholder="Enter bounty title"
                           required
+                          disabled={isSubmitting}
                           onChange={(e) => setBountyTitle(e.target.value)}
                         />
                       </div>
@@ -265,6 +264,7 @@ export default function AdminPanel() {
                           placeholder="Provide detailed description of the bounty requirements..."
                           rows={4}
                           required
+                          disabled={isSubmitting}
                           onChange={(e) => setBountyDescription(e.target.value)}
                         />
                       </div>
@@ -275,6 +275,7 @@ export default function AdminPanel() {
                           placeholder="List specific requirements, submission guidelines, and evaluation criteria..."
                           rows={4}
                           required
+                          disabled={isSubmitting}
                           onChange={(e) => setBountyRequirements(e.target.value)}
                         />
                       </div>
@@ -282,21 +283,22 @@ export default function AdminPanel() {
                     <div className="space-y-4 md:grid-cols-2 gap-6 md:grid">
                       <div>
                         <Label htmlFor="category">Category</Label>
-                        <Select required onValueChange={(value) => setBountyCategory(value)}>
+                        <Select disabled={isSubmitting} required onValueChange={(value) => setBountyCategory(Number(value))}>
                           <SelectTrigger>
                             <SelectValue placeholder="Select category" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="creative">Creative</SelectItem>
-                            <SelectItem value="technical">Technical</SelectItem>
-                            <SelectItem value="marketing">Marketing</SelectItem>
-                            <SelectItem value="community">Community</SelectItem>
+                            {categories.map(({ id, name }) => (
+                              <SelectItem key={id} value={id.toString()}>
+                                {name}
+                              </SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
                       </div>
                       <div>
                         <Label htmlFor="duration">Duration (days)</Label>
-                        <Input id="duration" placeholder="Enter duration in days" type="date" onChange={(e) => setBountyEndDate(e.target.value)} />
+                        <Input disabled={isSubmitting} id="duration" placeholder="Enter duration in days" type="date" onChange={(e) => setBountyEndDate(e.target.value)} />
                       </div>
                     </div>
                   </div>
@@ -313,6 +315,7 @@ export default function AdminPanel() {
                           onClick={addWinnerPosition}
                           size="sm"
                           className="bg-[#ff6900] hover:bg-[#ff6900]/90 text-white"
+                          disabled={isSubmitting}
                         >
                           <Plus className="w-4 h-4 mr-1" />
                           Add Winner
@@ -339,6 +342,7 @@ export default function AdminPanel() {
                                   onChange={(e) => updateWinnerPrize(index, e.target.value)}
                                   className="mt-1"
                                   required
+                                  disabled={isSubmitting}
                                 />
                               </div>
                             </div>
@@ -349,6 +353,7 @@ export default function AdminPanel() {
                                 size="sm"
                                 variant="outline"
                                 className="flex-shrink-0"
+                                disabled={isSubmitting}
                               >
                                 <X className="w-4 h-4" />
                               </Button>
@@ -367,7 +372,11 @@ export default function AdminPanel() {
                     </CardContent>
                   </Card>
                   <div className="flex space-x-4">
-                    <Button type="submit" className="bg-[#ff6900] hover:bg-[#ff6900]/90 text-white">Create Bounty</Button>
+                    <Button
+                      type="submit"
+                      className={cn("hover:bg-[#ff6900]/90 text-white", isSubmitting ? "opacity-50 cursor-not-allowed pointer-events-none bg-gray-400" : "bg-[#ff6900] ")}
+                      disabled={isSubmitting}
+                    >Create Bounty</Button>
                   </div>
                 </form>
 

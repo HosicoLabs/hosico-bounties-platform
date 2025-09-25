@@ -1,11 +1,12 @@
 import { createClient } from "@/utils/supabase/server";
 
-export async function GET(req: Request) {
+export async function GET(_req: Request) {
     try {
         const supabase = await createClient();
         const { data, error } = await supabase.from("categories").select("*");
 
         if (error) {
+            console.error("Supabase error:", error);
             return new Response(JSON.stringify({ error: error.message }), { status: 500 });
         }
 

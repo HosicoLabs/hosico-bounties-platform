@@ -1,4 +1,4 @@
-export interface BountryCategory {
+export interface BountyCategory {
     id: number;
     name: string;
     created_at: string;
@@ -15,7 +15,9 @@ export interface Bounty {
     title: string,
     description: string,
     requirements: string,
-    category: BountryCategory,
-    endDate: string,
+    category_id: number,
+    end_date: string,
     prizes: BountyPrize[],
+
+    category?: BountyCategory | null;
 }
