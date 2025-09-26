@@ -6,7 +6,7 @@ import { useState } from "react"
 import Image from "next/image"
 import { CategoryButtonsSkeleton } from "@/components/skeletons/category-buttons-skeleton"
 import { useBounties } from "@/components/bounties-provider"
-import { BountyCardSkeleton } from "@/components/skeletons/bounty-card-skeleton"
+import { BountyCardsSkeletonGrid } from "@/components/skeletons/bounty-card-skeleton"
 import { BountyCard } from "@/components/bounty-card"
 import { useAdmin } from "@/components/admin/use-admin"
 
@@ -70,7 +70,7 @@ export default function Home() {
 
           {
             bountiesLoading || isAdminLoading ? (
-              <BountyCardSkeleton />
+              <BountyCardsSkeletonGrid />
             ) : (
               filteredBounties.length > 0 ? (
                 <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">

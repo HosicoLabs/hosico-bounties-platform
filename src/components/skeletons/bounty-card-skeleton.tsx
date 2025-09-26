@@ -60,7 +60,7 @@ export function BountyCardSkeleton() {
 
 export function BountyCardsSkeletonGrid({ count = 6 }: { count?: number }) {
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6 w-full">
       {Array.from({ length: count }).map((_, i) => (
         <BountyCardSkeleton key={i} />
       ))}

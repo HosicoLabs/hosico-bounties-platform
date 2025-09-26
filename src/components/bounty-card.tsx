@@ -21,6 +21,7 @@ import {
     AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useBounties } from "./bounties-provider";
+import { cn } from "@/lib/utils";
 
 type Props = {
     bounty: Bounty;
@@ -57,15 +58,24 @@ export function BountyCard({ bounty, isAdmin = false }: Props) {
         }
     }
 
+    const isEnded = (iso?: string | null) => {
+        if (!iso) return false;
+        const t = new Date(iso).getTime();
+        return Number.isFinite(t) && t < Date.now();
+    };
+
     return (
         <Card
             key={bounty?.id}
             className="border-0 shadow-lg bg-white/80 backdrop-blur-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1 justify-between"
         >
             <CardHeader>
-                <div className="flex items-start justify-between mb-2">
+                <div className="flex items-start justify-start gap-2 mb-2">
                     <Badge variant="outline" className="border-[#1c398e] text-[#1c398e]">
                         {bounty?.category?.name}
+                    </Badge>
+                    <Badge variant="outline" className={cn(isEnded(bounty?.end_date) ? "border-[#1c398e] text-[#1c398e]" : "bg-[#ff6900] text-white border-[#ff6900]")}>
+                        {isEnded(bounty?.end_date) ? "Finalized" : "Active"}
                     </Badge>
                 </div>
                 <CardTitle className="text-[#1c398e] text-2xl">{bounty?.title}</CardTitle>
@@ -150,7 +160,7 @@ export function BountyCard({ bounty, isAdmin = false }: Props) {
 
                             <Link href={`/bounties/${bounty?.id}`}>
                                 <Button className="bg-[#ff6900] hover:bg-[#ff6900]/90 text-white">
-                                    {isAdmin ? "View Bounty" : "Join Bounty"}
+                                    {isEnded(bounty?.end_date) ? "View results" : (isAdmin ? "View Bounty" : "Join Bounty")}
                                 </Button>
                             </Link>
                         </div>

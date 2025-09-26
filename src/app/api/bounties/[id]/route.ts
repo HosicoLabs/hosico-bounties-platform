@@ -1,10 +1,13 @@
+import { NextRequest } from "next/server";
 import { createClient } from "@/utils/supabase/server";
 
-type Ctx = { params: { id: string } };
-
-export async function GET({ params }: Ctx) {
+export async function GET(
+  _req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
-    const idNum = Number(params.id);
+    const { id } = await params;
+    const idNum = Number(id);
     if (!Number.isFinite(idNum) || idNum <= 0) {
       return new Response(JSON.stringify({ error: "Invalid id" }), { status: 400 });
     }

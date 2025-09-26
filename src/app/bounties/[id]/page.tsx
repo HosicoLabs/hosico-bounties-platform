@@ -289,11 +289,10 @@ export default function BountyDetailPage() {
                             <TabsContent value="details">
                                 <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-sm">
                                     <CardHeader>
-                                        <CardTitle className="text-[#1c398e]">Requirements & Guidelines</CardTitle>
+                                        <CardTitle className="text-[#1c398e]">Submission Requirements</CardTitle>
                                     </CardHeader>
                                     <CardContent className="space-y-6">
                                         <div>
-                                            <h4 className="font-semibold text-[#1c398e] mb-3">Submission Requirements</h4>
                                             <ul className="space-y-2">
                                                 {(Array.isArray(bounty.requirements)
                                                     ? bounty.requirements
