@@ -10,6 +10,15 @@ export interface BountyPrize {
     prize: number;
 }
 
+export interface Submission {
+    id: number;
+    bounty_id: number;
+    wallet_address: string;
+    submission_link: string;
+    tweet_link?: string | null;
+    extra_info?: string | null;
+}
+
 export interface Bounty {
     id: number;
     title: string,
@@ -20,4 +29,7 @@ export interface Bounty {
     prizes: BountyPrize[],
 
     category?: BountyCategory | null;
+
+    submissions?: Submission[];
+    submissions_total?: number;
 }

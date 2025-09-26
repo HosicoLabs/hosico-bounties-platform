@@ -18,7 +18,8 @@ export async function GET(
       .from("bounties")
       .select(`
         *,
-        category:categories(*)
+        category:categories(*),
+        submissions:submissions(*)
       `)
       .eq("id", idNum)
       .single();

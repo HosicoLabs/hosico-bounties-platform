@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 
@@ -14,21 +14,11 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Trophy, Coins, Clock, FileText, Star, ArrowLeft, CheckCircle, Crown } from "lucide-react";
 import { useAdmin } from "@/components/admin/use-admin";
-
-type Prize = { place: string; prize: number; description?: string };
-type Category = { id: number; name: string };
-type Bounty = {
-    id: number;
-    title: string;
-    description: string;
-    requirements?: string | string[];
-    end_date: string;
-    category?: Category | null;
-    prizes: Prize[];
-    submissions?: number;
-    status?: string;
-    total_prize?: number;
-};
+import { isEnded } from "@/utils/bounties";
+import { cn } from "@/lib/utils";
+import { useSolana } from "@/components/solana/use-solana";
+import { WalletDropdown } from "@/components/wallet-dropdown";
+import { Bounty, Submission } from "@/app/types";
 
 const mockSubmissions = [
     { id: 1, user: "MemeLord42", title: "Hosico to the Moon!", submittedAt: "2 hours ago", votes: 15, status: "pending" },
@@ -38,18 +28,21 @@ const mockSubmissions = [
 
 export default function BountyDetailPage() {
     const { id } = useParams<{ id: string }>();
+
     const [bounty, setBounty] = useState<Bounty | null>(null);
     const [loading, setLoading] = useState(true);
     const [err, setErr] = useState<string | null>(null);
 
-    // submission form state
-    const [submissionText, setSubmissionText] = useState("");
-    const [submissionTitle, setSubmissionTitle] = useState("");
+    const { connected, wallet } = useSolana()
+    const { isAdmin } = useAdmin();
+
+    const [submission, setSubmission] = useState<Submission | null>(null);
+
+    const [submissionLoading, setSubmissionLoading] = useState(false);
     const [submissionLink, setSubmissionLink] = useState("");
     const [tweetLink, setTweetLink] = useState("");
     const [additionalInfo, setAdditionalInfo] = useState("");
-    const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
-    const { isAdmin } = useAdmin();
+
     const [selectedWinners, setSelectedWinners] = useState<{ [key: number]: string }>({});
     const [submissionSuccess, setSubmissionSuccess] = useState(false);
 
@@ -84,98 +77,64 @@ export default function BountyDetailPage() {
         [bounty]
     );
 
-    const handleSubmission = (e: React.FormEvent) => {
+    const handleSubmission = async (e: React.FormEvent) => {
         e.preventDefault();
-        // TODO: post to your submissions endpoint
-        setSubmissionSuccess(true);
-        setSubmissionTitle(""); setSubmissionText(""); setSubmissionLink("");
-        setTweetLink(""); setAdditionalInfo(""); setUploadedFiles([]);
-        setTimeout(() => setSubmissionSuccess(false), 3000);
+        setSubmissionLoading(true);
+
+        try {
+
+            if (!submissionLink) {
+                throw new Error("Submission link is required");
+            }
+
+            const submissionPayload = {
+                submission: {
+                    bounty_id: Number(id),
+                    wallet_address: wallet?.accounts[0]?.address,
+                    submission_link: submissionLink,
+                    tweet_link: tweetLink || "",
+                    extra_info: additionalInfo || "",
+                }
+            }
+
+            let data = null;
+
+            if (submission?.id) {
+                data = await (await fetch("/api/submissions/update", {
+                    method: "PUT",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        submissionId: submission.id,
+                        submission: submissionPayload.submission
+                    }),
+                })).json()
+            } else {
+                data = await (await fetch("/api/submissions/create", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify(submissionPayload),
+                })).json();
+            }
+
+            if (!data || data.error) {
+                throw new Error(data?.error || "Failed to submit your entry");
+            }
+
+            console.log(data)
+
+            setSubmission(data.submission);
+            setSubmissionSuccess(true);
+            setTimeout(() => setSubmissionSuccess(false), 3000);
+        } catch (err) {
+            console.error("Submission error:", err);
+        } finally {
+            setSubmissionLoading(false);
+        }
     };
-
-    const SubmissionForm = () => (
-        <form onSubmit={handleSubmission} className="space-y-6">
-            {submissionSuccess && (
-                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                    <div className="flex items-center">
-                        <CheckCircle className="w-5 h-5 text-green-600 mr-2" />
-                        <p className="text-green-800 font-medium">Submission successful! Your entry has been recorded.</p>
-                    </div>
-                </div>
-            )}
-
-            <div className="space-y-1">
-                <p className="text-sm font-medium text-gray-900">We can&apos;t wait to see what you&apos;ve created!</p>
-                <p className="text-xs text-gray-500">Note: You can edit this submission until the bounty deadline.</p>
-            </div>
-
-            <div>
-                <Label htmlFor="submission-link" className="text-sm font-medium text-gray-900 flex items-center">
-                    Link to Your Submission <span className="text-red-500 ml-1">*</span>
-                </Label>
-                <p className="text-xs text-gray-500 mb-2">Make sure this link is accessible by everyone!</p>
-                <div className="flex">
-                    <span className="inline-flex items-center px-3 py-2 border border-r-0 border-gray-300 bg-gray-50 text-gray-500 text-sm rounded-l-md">
-                        https://
-                    </span>
-                    <Input
-                        id="submission-link"
-                        placeholder="Add a link"
-                        value={submissionLink}
-                        onChange={(e) => setSubmissionLink(e.target.value)}
-                        className="rounded-l-none border-l-0 focus:ring-2 focus:ring-[#1c398e] focus:border-[#1c398e]"
-                        required
-                    />
-                </div>
-            </div>
-
-            <div>
-                <Label htmlFor="tweet-link" className="text-sm font-medium text-gray-900">Tweet Link</Label>
-                <p className="text-xs text-gray-500 mb-2">
-                    This helps sponsors discover (and maybe repost) your work on X!
-                </p>
-                <div className="flex">
-                    <span className="inline-flex items-center px-3 py-2 border border-r-0 border-gray-300 bg-gray-50 text-gray-500 text-sm rounded-l-md">
-                        https://
-                    </span>
-                    <Input
-                        id="tweet-link"
-                        placeholder="Add a tweet's link"
-                        value={tweetLink}
-                        onChange={(e) => setTweetLink(e.target.value)}
-                        className="rounded-l-none border-l-0 focus:ring-2 focus:ring-[#1c398e] focus:border-[#1c398e]"
-                    />
-                </div>
-            </div>
-
-            <div>
-                <Label htmlFor="additional-info" className="text-sm font-medium text-gray-900">Anything Else?</Label>
-                <div className="relative">
-                    <Textarea
-                        id="additional-info"
-                        placeholder="Add info or link"
-                        rows={3}
-                        value={additionalInfo}
-                        onChange={(e) => setAdditionalInfo(e.target.value)}
-                        className="focus:ring-2 focus:ring-[#1c398e] focus:border-[#1c398e] pr-10"
-                    />
-                    <div className="absolute right-3 top-3">
-                        <div className="w-6 h-6 bg-gray-100 rounded-full flex items-center justify-center">
-                            <FileText className="w-3 h-3 text-gray-400" />
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <Button
-                type="submit"
-                className="w-full bg-[#ff6900] hover:bg-[#ff6900]/90 text-white font-medium"
-                disabled={!submissionLink}
-            >
-                Submit Entry
-            </Button>
-        </form>
-    );
 
     const handleWinnerSelection = (submissionId: number, position: string) =>
         setSelectedWinners((prev) => ({ ...prev, [submissionId]: position }));
@@ -183,6 +142,37 @@ export default function BountyDetailPage() {
     const announceWinners = () => {
         console.log("Selected winners:", selectedWinners);
     };
+
+    const findExistingSubmission = useCallback(async () => {
+        if (!connected || !wallet?.accounts?.length) return;
+
+        try {
+            const data = await (await fetch("/api/submissions/find", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    bounty_id: Number(id),
+                    wallet_address: wallet?.accounts[0]?.address,
+                }),
+            })).json()
+
+            if (data?.submission?.id) {
+                setSubmission(data.submission);
+                setSubmissionLink(data.submission.submission_link || "");
+                setTweetLink(data.submission.tweet_link || "");
+                setAdditionalInfo(data.submission.extra_info || "");
+            }
+        } catch (err) {
+            console.error("Error fetching existing submission:", err);
+        }
+    }, [connected, wallet?.accounts, id]);
+
+
+    useEffect(() => {
+        findExistingSubmission()
+    }, [wallet?.accounts, id, findExistingSubmission])
 
     if (loading) {
         return (
@@ -235,7 +225,7 @@ export default function BountyDetailPage() {
                                             <Badge variant="outline" className="border-[#1c398e] text-[#1c398e]">
                                                 {bounty.category?.name ?? "—"}
                                             </Badge>
-                                            <Badge className="bg-[#ff6900] text-white">{bounty.status ?? "Active"}</Badge>
+                                            <Badge className={cn(isEnded(bounty?.end_date) ? "border-[#1c398e] text-[#1c398e] bg-transparent" : "bg-[#ff6900] text-white border-[#ff6900]")}>{isEnded(bounty.end_date) ? "Finalized" : "Active"}</Badge>
                                         </div>
                                         <CardTitle className="text-2xl text-[#1c398e] text-balance mb-2">
                                             {bounty.title}
@@ -261,14 +251,14 @@ export default function BountyDetailPage() {
                                         <FileText className="w-5 h-5 text-muted-foreground" />
                                         <div>
                                             <p className="text-sm text-muted-foreground">Submissions</p>
-                                            <p className="font-bold">{bounty.submissions ?? 0}</p>
+                                            <p className="font-bold">{bounty.submissions && bounty.submissions.length > 0 ? bounty.submissions?.length : 0}</p>
                                         </div>
                                     </div>
                                     <div className="flex items-center space-x-2">
-                                        <Clock className="w-5 h-5 text-red-500" />
+                                        <Clock className={cn(isEnded(bounty.end_date) ? "w-5 h-5 text-red-500" : "text-[#ff6900]")} />
                                         <div>
                                             <p className="text-sm text-muted-foreground">Ends</p>
-                                            <p className="font-bold text-red-500">
+                                            <p className={cn("font-bold", isEnded(bounty.end_date) ? "text-red-500" : "text-[#ff6900]")}>
                                                 {new Date(bounty.end_date).toLocaleDateString()}
                                             </p>
                                         </div>
@@ -317,7 +307,7 @@ export default function BountyDetailPage() {
                                                             <div className="w-8 h-8 bg-[#fdc700] rounded-full flex items-center justify-center">
                                                                 <span className="text-sm font-bold text-[#1c398e]">{prize.place}</span>
                                                             </div>
-                                                            <span className="font-medium">{prize.description ?? ""}</span>
+                                                            {/* <span className="font-medium">{prize.description ?? ""}</span> */}
                                                         </div>
                                                         <span className="font-bold text-[#ff6900]">{Number(prize.prize).toLocaleString()} HOSICO</span>
                                                     </div>
@@ -327,15 +317,138 @@ export default function BountyDetailPage() {
                                     </CardContent>
                                 </Card>
                             </TabsContent>
-
+                            {/* <CardContent className="p-6 text-center">
+                                                <CheckCircle className="w-10 h-10 text-green-600 mx-auto mb-4" />
+                                                <h2 className="text-xl font-semibold text-[#1c398e] mb-2">Bounty Finalized</h2>
+                                            </CardContent> */}
                             <TabsContent value="submit">
+
                                 <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-sm">
                                     <CardHeader>
                                         <CardTitle className="text-[#1c398e]">Submit Your Entry</CardTitle>
                                         <CardDescription>Upload your submission for this bounty challenge</CardDescription>
+                                        <p className="text-xs ">We can&apos;t wait to see what you&apos;ve created!</p>
+
                                     </CardHeader>
                                     <CardContent>
-                                        <SubmissionForm />
+                                        {
+                                            connected ? (
+                                                <>
+                                                    {
+                                                        isEnded(bounty.end_date) ? (
+                                                            <div className="p-6 text-center">
+                                                                <CheckCircle className="w-10 h-10 text-green-600 mx-auto mb-4" />
+                                                                <h2 className="text-xl font-semibold text-[#1c398e] mb-2">Bounty Finalized</h2>
+                                                            </div>
+                                                        ) : ""
+                                                    }
+
+                                                    <form onSubmit={handleSubmission} className="space-y-6">
+
+                                                        <div>
+                                                            <Label htmlFor="submission-link" className="text-sm font-medium text-gray-900 flex items-center">
+                                                                Link to Your Submission <span className="text-red-500 ml-1">*</span>
+                                                            </Label>
+                                                            <p className="text-xs text-gray-500 mb-2">Make sure this link is accessible by everyone!</p>
+                                                            <div className="flex">
+                                                                <Input
+                                                                    id="submission-link"
+                                                                    placeholder="Add a link"
+                                                                    type="url"
+                                                                    value={submissionLink}
+                                                                    disabled={submissionLoading || isEnded(bounty.end_date)}
+                                                                    onChange={(e) => setSubmissionLink(e.target.value)}
+                                                                    className="focus:ring-2 focus:ring-[#1c398e] focus:border-[#1c398e]"
+                                                                    required
+                                                                />
+                                                            </div>
+                                                        </div>
+
+                                                        <div>
+                                                            <Label htmlFor="tweet-link" className="text-sm font-medium text-gray-900">Tweet Link</Label>
+                                                            <p className="text-xs text-gray-500 mb-2">
+                                                                This helps sponsors discover (and maybe repost) your work on X!
+                                                            </p>
+                                                            <div className="flex">
+                                                                <Input
+                                                                    id="tweet-link"
+                                                                    placeholder="Add a tweet's link"
+                                                                    type="url"
+                                                                    disabled={submissionLoading || isEnded(bounty.end_date)}
+                                                                    value={tweetLink}
+                                                                    onChange={(e) => setTweetLink(e.target.value)}
+                                                                    className="focus:ring-2 focus:ring-[#1c398e] focus:border-[#1c398e]"
+                                                                />
+                                                            </div>
+                                                        </div>
+
+                                                        <div>
+                                                            <Label htmlFor="additional-info" className="text-sm font-medium text-gray-900">Anything Else?</Label>
+                                                            <div className="relative">
+                                                                <Textarea
+                                                                    id="additional-info"
+                                                                    placeholder="Add info or link"
+                                                                    rows={3}
+                                                                    disabled={submissionLoading || isEnded(bounty.end_date)}
+                                                                    value={additionalInfo}
+                                                                    onChange={(e) => setAdditionalInfo(e.target.value)}
+                                                                    className="focus:ring-2 focus:ring-[#1c398e] focus:border-[#1c398e] pr-10"
+                                                                />
+                                                                <div className="absolute right-3 top-3">
+                                                                    <div className="w-6 h-6 bg-gray-100 rounded-full flex items-center justify-center">
+                                                                        <FileText className="w-3 h-3 text-gray-400" />
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
+                                                        <Button
+                                                            type="submit"
+                                                            className={cn("w-full bg-[#ff6900] hover:bg-[#ff6900]/90 text-white font-medium", isEnded(bounty.end_date) || submissionLoading ? "opacity-50 cursor-not-allowed pointer-events-none" : "")}
+                                                            disabled={!submissionLink || submissionLoading || isEnded(bounty.end_date)}
+                                                        >
+                                                            {submission?.id ? "Update Submission" : "Submit Entry"}
+                                                        </Button>
+
+                                                        {
+                                                            submissionLoading && <p className="text-sm text-muted-foreground">Submitting your entry…</p>
+                                                        }
+
+                                                        {submissionSuccess && (
+                                                            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                                                                <div className="flex items-center">
+                                                                    <CheckCircle className="w-5 h-5 text-green-600 mr-2" />
+
+
+                                                                    <p className="text-green-800 font-medium">
+                                                                        {
+                                                                            submission?.id ? "Submission updated successfully!" : "Submission created successfully!"
+                                                                        }
+                                                                    </p>
+
+                                                                </div>
+                                                            </div>
+                                                        )}
+
+
+                                                        {
+                                                            submission?.id ? (
+                                                                <span>You can update your submission until the Bounty&apos;s end date.</span>
+                                                            ) : ""
+                                                        }
+                                                    </form>
+                                                </>
+
+
+                                            ) : (
+                                                <>
+                                                    <div className="flex flex-col justify-center items-center gap-5 text-center text-muted-foreground bg-gray-100 py-4 px-2 rounded-md">
+                                                        <p>Please, connect a wallet to submit your participation!</p>
+                                                        <WalletDropdown />
+                                                    </div>
+                                                </>
+                                            )
+                                        }
                                     </CardContent>
                                 </Card>
                             </TabsContent>
@@ -351,7 +464,6 @@ export default function BountyDetailPage() {
                                             <CardDescription>Choose winners for this bounty and assign their positions</CardDescription>
                                         </CardHeader>
                                         <CardContent className="space-y-6">
-                                            {/* Prize Structure Display */}
                                             <div className="bg-[#1c398e]/5 rounded-lg p-4">
                                                 <h4 className="font-semibold text-[#1c398e] mb-3">Prize Structure</h4>
                                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -364,7 +476,6 @@ export default function BountyDetailPage() {
                                                 </div>
                                             </div>
 
-                                            {/* Submissions with Winner Selection */}
                                             <div className="space-y-4">
                                                 <h4 className="font-semibold text-[#1c398e]">Submissions for Review</h4>
                                                 {mockSubmissions.map((submission) => (

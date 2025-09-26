@@ -7,8 +7,10 @@ export async function GET() {
             .from("bounties")
             .select(`
                 *,
-                category:categories(*)
+                category:categories(*),
+                submissions:submissions(count)
             `)
+            .limit(1, { foreignTable: "submissions" })
             .order("created_at", { ascending: false });
 
         if (error) {
@@ -16,8 +18,13 @@ export async function GET() {
             return new Response(JSON.stringify({ error: error.message }), { status: 500 });
         }
 
+        const bounties = (data ?? []).map((b) => ({
+            ...b,
+            submissions_total: b?.submissions?.[0]?.count ?? 0,
+        }));
+
         return new Response(JSON.stringify({
-            bounties: data
+            bounties
         }), { status: 200 });
     } catch (err) {
         console.error(err)

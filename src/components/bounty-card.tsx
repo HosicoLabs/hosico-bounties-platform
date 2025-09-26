@@ -5,7 +5,7 @@ import { Bounty } from "@/app/types";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
 import { Badge } from "./ui/badge";
 import { Clock, Coins, Users } from "lucide-react";
-import { calculateTotalPrize } from "@/utils/bounties";
+import { calculateTotalPrize, isEnded } from "@/utils/bounties";
 import { formatEndDate } from "@/utils/date";
 import { Button } from "./ui/button";
 import Link from "next/link";
@@ -58,12 +58,6 @@ export function BountyCard({ bounty, isAdmin = false }: Props) {
         }
     }
 
-    const isEnded = (iso?: string | null) => {
-        if (!iso) return false;
-        const t = new Date(iso).getTime();
-        return Number.isFinite(t) && t < Date.now();
-    };
-
     return (
         <Card
             key={bounty?.id}
@@ -74,7 +68,7 @@ export function BountyCard({ bounty, isAdmin = false }: Props) {
                     <Badge variant="outline" className="border-[#1c398e] text-[#1c398e]">
                         {bounty?.category?.name}
                     </Badge>
-                    <Badge variant="outline" className={cn(isEnded(bounty?.end_date) ? "border-[#1c398e] text-[#1c398e]" : "bg-[#ff6900] text-white border-[#ff6900]")}>
+                    <Badge variant="outline" className={cn(isEnded(bounty?.end_date) ? "border-[#1c398e] text-[#1c398e] bg-transparent" : "bg-[#ff6900] text-white border-[#ff6900]")}>
                         {isEnded(bounty?.end_date) ? "Finalized" : "Active"}
                     </Badge>
                 </div>
@@ -112,7 +106,7 @@ export function BountyCard({ bounty, isAdmin = false }: Props) {
                     <div className="flex items-center justify-between mt-10">
                         <div className="flex items-center space-x-2">
                             <Users className="w-4 h-4 text-muted-foreground" />
-                            {/* <span className="text-sm text-muted-foreground">{bounty?.submissions} Submissions</span> */}
+                            <span className="text-sm text-muted-foreground">{bounty?.submissions_total} Submissions</span>
                         </div>
                         <div className="flex items-center space-x-2 justify-end">
                             {isAdmin ? (
