@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
       .eq("wallet_address", wallet_address)
       .order("created_at", { ascending: false })
       .limit(1)
-      .single();
+      .maybeSingle();
 
     if (error) {
       console.error("Supabase error:", error);

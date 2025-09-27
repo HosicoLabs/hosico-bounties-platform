@@ -12,19 +12,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Trophy, Coins, Clock, FileText, Star, ArrowLeft, CheckCircle, Crown } from "lucide-react";
+import { Trophy, Coins, Clock, FileText, ArrowLeft, CheckCircle, Crown, Check, X } from "lucide-react";
 import { useAdmin } from "@/components/admin/use-admin";
-import { isEnded } from "@/utils/bounties";
+import { calculateTotalPrize, isEnded } from "@/utils/bounties";
 import { cn } from "@/lib/utils";
 import { useSolana } from "@/components/solana/use-solana";
 import { WalletDropdown } from "@/components/wallet-dropdown";
 import { Bounty, Submission } from "@/app/types";
-
-const mockSubmissions = [
-    { id: 1, user: "MemeLord42", title: "Hosico to the Moon!", submittedAt: "2 hours ago", votes: 15, status: "pending" },
-    { id: 2, user: "CryptoArtist", title: "When HOSICO pumps", submittedAt: "5 hours ago", votes: 23, status: "pending" },
-];
-
 
 export default function BountyDetailPage() {
     const { id } = useParams<{ id: string }>();
@@ -42,40 +36,40 @@ export default function BountyDetailPage() {
     const [submissionLink, setSubmissionLink] = useState("");
     const [tweetLink, setTweetLink] = useState("");
     const [additionalInfo, setAdditionalInfo] = useState("");
-
-    const [selectedWinners, setSelectedWinners] = useState<{ [key: number]: string }>({});
     const [submissionSuccess, setSubmissionSuccess] = useState(false);
 
-    useEffect(() => {
+    const [selectedWinners, setSelectedWinners] = useState<{ [key: number]: string }>({});
+    const [isSelectingWinners, setIsSelectingWinners] = useState(false);
+    const [selectedWinnersSuccess, setSelectedWinnersSuccess] = useState(false)
+    const [selectedWinnersError, setSelectedWinnersError] = useState("")
+
+    const fetchBounty = useCallback(async () => {
         let mounted = true;
         setLoading(true);
         setErr(null);
 
-        (async () => {
-            try {
-                const res = await fetch(`/api/bounties/${id}`, { cache: "no-store" });
-                const json = await res.json();
-                if (!res.ok) throw new Error(json?.error || "Failed to load bounty");
-                if (!mounted) return;
-                setBounty(json.bounty);
-            } catch (e) {
-                if (!mounted) return;
-                const errorMessage = (e instanceof Error) ? e.message : "Failed to load bounty";
-                setErr(errorMessage);
-            } finally {
-                if (mounted) setLoading(false);
-            }
-        })();
+        try {
+            const res = await fetch(`/api/bounties/${id}`, { cache: "no-store" });
+            const json = await res.json();
+            if (!res.ok) throw new Error(json?.error || "Failed to load bounty");
+            if (!mounted) return;
+            setBounty(json.bounty);
+        } catch (err) {
+            if (!mounted) return;
+            const errorMessage = (err instanceof Error) ? err.message : "Failed to load bounty";
+            setErr(errorMessage);
+        } finally {
+            if (mounted) setLoading(false);
+        }
 
         return () => {
             mounted = false;
         };
-    }, [id]);
+    }, [id])
 
-    const totalPrize = useMemo(
-        () => (bounty?.prizes ?? []).reduce((sum, p) => sum + (Number(p.prize) || 0), 0),
-        [bounty]
-    );
+    useEffect(() => {
+        fetchBounty()
+    }, [id, fetchBounty]);
 
     const handleSubmission = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -124,8 +118,6 @@ export default function BountyDetailPage() {
                 throw new Error(data?.error || "Failed to submit your entry");
             }
 
-            console.log(data)
-
             setSubmission(data.submission);
             setSubmissionSuccess(true);
             setTimeout(() => setSubmissionSuccess(false), 3000);
@@ -136,15 +128,53 @@ export default function BountyDetailPage() {
         }
     };
 
-    const handleWinnerSelection = (submissionId: number, position: string) =>
-        setSelectedWinners((prev) => ({ ...prev, [submissionId]: position }));
+    const handleWinnerSelection = (submissionId: number, position: string) => {
+        setSelectedWinners(prev => {
+            const next = { ...prev };
+            if (position === "No Prize") {
+                delete next[submissionId];
+            } else {
+                next[submissionId] = position;
+            }
+            return next;
+        });
+    };
 
-    const announceWinners = () => {
-        console.log("Selected winners:", selectedWinners);
+    const announceWinners = async () => {
+        setIsSelectingWinners(true);
+        try {
+            const data = await (await fetch("/api/admin/bounty/select-winners", {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    bountyId: Number(id),
+                    winners: selectedWinners,
+                }),
+            })).json()
+
+            if (data?.error) {
+                throw new Error(data.error || "Failed to announce winners");
+            }
+
+            setSelectedWinnersSuccess(true)
+
+            await fetchBounty()
+
+            setTimeout(() => {
+                setSelectedWinnersSuccess(false)
+            }, 5000)
+        } catch (err) {
+            console.error("Error announcing winners:", err);
+            setSelectedWinnersError((err as Error).message)
+        } finally {
+            setIsSelectingWinners(false)
+        }
     };
 
     const findExistingSubmission = useCallback(async () => {
-        if (!connected || !wallet?.accounts?.length) return;
+        if (!connected || !wallet?.accounts?.length || !bounty?.id || !id) return;
 
         try {
             const data = await (await fetch("/api/submissions/find", {
@@ -167,8 +197,7 @@ export default function BountyDetailPage() {
         } catch (err) {
             console.error("Error fetching existing submission:", err);
         }
-    }, [connected, wallet?.accounts, id]);
-
+    }, [connected, wallet?.accounts, id, bounty?.id]);
 
     useEffect(() => {
         findExistingSubmission()
@@ -195,6 +224,7 @@ export default function BountyDetailPage() {
             </div>
         );
     }
+
     return (
         <div className="min-h-screen bg-gradient-to-br from-[#1c398e]/5 to-[#ff6900]/5">
             <main className="container mx-auto px-4 py-8">
@@ -243,7 +273,7 @@ export default function BountyDetailPage() {
                                         <div>
                                             <p className="text-sm text-muted-foreground">Total Reward</p>
                                             <p className="font-bold text-[#ff6900]">
-                                                {totalPrize.toLocaleString()} HOSICO
+                                                {calculateTotalPrize(bounty.prizes)} HOSICO
                                             </p>
                                         </div>
                                     </div>
@@ -307,20 +337,92 @@ export default function BountyDetailPage() {
                                                             <div className="w-8 h-8 bg-[#fdc700] rounded-full flex items-center justify-center">
                                                                 <span className="text-sm font-bold text-[#1c398e]">{prize.place}</span>
                                                             </div>
-                                                            {/* <span className="font-medium">{prize.description ?? ""}</span> */}
                                                         </div>
                                                         <span className="font-bold text-[#ff6900]">{Number(prize.prize).toLocaleString()} HOSICO</span>
                                                     </div>
                                                 ))}
                                             </div>
                                         </div>
+
+                                        {
+                                            !isEnded(bounty?.end_date) ? (
+                                                <p className="text-center text-muted-foreground bg-gray-100 py-4 px-2 rounded-md">The winners will be announced once the bounty has been finalized.
+                                                </p>
+                                            ) : (
+
+                                                bounty?.winners && bounty?.winners.length > 0 ? (
+                                                    <div>
+                                                        <h4 className="font-semibold text-[#1c398e] mb-3">Winners</h4>
+                                                        <div className="space-y-3">
+                                                            {
+                                                                bounty?.winners.map(({ position, submission }) => (
+                                                                    <Card key={submission.id} className="border border-[#1c398e]/20">
+                                                                        <CardContent className="p-4">
+                                                                            <div className="flex items-start justify-between gap-10">
+                                                                                <div className="flex-1">
+                                                                                    <span className="text-xs text-gray-500 inline-block mb-2">Participant</span>
+                                                                                    <div className="flex items-center space-x-3 mb-2">
+                                                                                        <h4 className="font-semibold text-[#1c398e]">{submission.wallet_address}</h4>
+                                                                                        <Badge className="bg-[#fdc700] text-[#1c398e]">
+
+                                                                                            {position} Place
+                                                                                        </Badge>
+                                                                                    </div>
+                                                                                    <ul className="flex flex-col md:flex-row md:space-x-4 space-y-1 md:space-y-0 text-sm text-muted-foreground">
+                                                                                        <li>
+                                                                                            <Link
+                                                                                                href={submission.submission_link}
+                                                                                                target="_blank"
+                                                                                                rel="noopener noreferrer"
+                                                                                                className="underline text-blue-600"
+                                                                                            >
+                                                                                                Submission link
+                                                                                            </Link>
+                                                                                        </li>
+
+                                                                                        {
+                                                                                            submission?.tweet_link ? (
+                                                                                                <li>
+                                                                                                    <Link
+                                                                                                        href={submission.tweet_link}
+                                                                                                        target="_blank"
+                                                                                                        rel="noopener noreferrer"
+                                                                                                        className="underline text-blue-600"
+                                                                                                    >
+                                                                                                        Tweet link
+                                                                                                    </Link>
+                                                                                                </li>
+                                                                                            ) : ""
+                                                                                        }
+                                                                                    </ul>
+                                                                                </div>
+                                                                            </div>
+                                                                            {
+                                                                                submission?.extra_info ? (
+                                                                                    <p className="text-sm text-muted-foreground mt-5"><span className="font-semibold text-gray-700">Extra info:</span> {submission.extra_info}</p>
+                                                                                ) : ""
+                                                                            }
+                                                                        </CardContent>
+                                                                    </Card>
+                                                                ))
+                                                            }
+                                                        </div>
+                                                    </div>
+                                                ) : (
+                                                    <>
+                                                        <h4 className="font-semibold text-[#1c398e] mb-3">Winners</h4>
+                                                        <p className="text-center text-muted-foreground bg-gray-100 py-4 px-2 rounded-md">The winners have not yet been announced.</p>
+                                                    </>
+                                                )
+                                            )
+                                        }
+
+
+
                                     </CardContent>
                                 </Card>
                             </TabsContent>
-                            {/* <CardContent className="p-6 text-center">
-                                                <CheckCircle className="w-10 h-10 text-green-600 mx-auto mb-4" />
-                                                <h2 className="text-xl font-semibold text-[#1c398e] mb-2">Bounty Finalized</h2>
-                                            </CardContent> */}
+
                             <TabsContent value="submit">
 
                                 <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-sm">
@@ -470,70 +572,135 @@ export default function BountyDetailPage() {
                                                     {bounty.prizes.map((prize, index) => (
                                                         <div key={index} className="flex items-center justify-between p-2 bg-white rounded border">
                                                             <span className="font-medium">{prize.place} Place</span>
-                                                            <span className="font-bold text-[#ff6900]">{prize.prize}</span>
+                                                            <span className="font-bold text-[#ff6900]">{Number.parseFloat(prize.prize.toString()).toLocaleString()} HOSICO</span>
                                                         </div>
                                                     ))}
                                                 </div>
                                             </div>
 
                                             <div className="space-y-4">
-                                                <h4 className="font-semibold text-[#1c398e]">Submissions for Review</h4>
-                                                {mockSubmissions.map((submission) => (
-                                                    <Card key={submission.id} className="border border-[#1c398e]/20">
-                                                        <CardContent className="p-4">
-                                                            <div className="flex items-center justify-between">
-                                                                <div className="flex-1">
-                                                                    <div className="flex items-center space-x-3 mb-2">
-                                                                        <h4 className="font-semibold text-[#1c398e]">{submission.title}</h4>
-                                                                        {selectedWinners[submission.id] && (
-                                                                            <Badge className="bg-[#fdc700] text-[#1c398e]">
-                                                                                {selectedWinners[submission.id]} Place
-                                                                            </Badge>
-                                                                        )}
+                                                <h4 className="font-semibold text-[#1c398e]">Submissions</h4>
+
+                                                {
+                                                    bounty?.submissions && bounty?.submissions.length > 0 ? (
+                                                        bounty.submissions?.map((submission) => (
+                                                            <Card key={submission.id} className="border border-[#1c398e]/20">
+                                                                <CardContent className="p-4">
+                                                                    <div className="flex items-start justify-between gap-10">
+                                                                        <div className="flex-1">
+                                                                            <span className="text-xs text-gray-500 inline-block mb-2">Participant</span>
+                                                                            <div className="flex items-center space-x-3 mb-2">
+                                                                                <h4 className="font-semibold text-[#1c398e]">{submission.wallet_address}</h4>
+                                                                                {selectedWinners[submission.id] && (
+                                                                                    selectedWinners[submission.id] !== "No Prize" ? (
+                                                                                        <Badge className="bg-[#fdc700] text-[#1c398e]">
+
+                                                                                            {selectedWinners[submission.id]} Place
+                                                                                        </Badge>
+
+                                                                                    ) : ""
+                                                                                )}
+                                                                            </div>
+                                                                            <ul className="flex flex-col md:flex-row md:space-x-4 space-y-1 md:space-y-0 text-sm text-muted-foreground">
+                                                                                <li>
+                                                                                    <Link
+                                                                                        href={submission.submission_link}
+                                                                                        target="_blank"
+                                                                                        rel="noopener noreferrer"
+                                                                                        className="underline text-blue-600"
+                                                                                    >
+                                                                                        Submission link
+                                                                                    </Link>
+                                                                                </li>
+
+                                                                                {
+                                                                                    submission?.tweet_link ? (
+                                                                                        <li>
+                                                                                            <Link
+                                                                                                href={submission.tweet_link}
+                                                                                                target="_blank"
+                                                                                                rel="noopener noreferrer"
+                                                                                                className="underline text-blue-600"
+                                                                                            >
+                                                                                                Tweet link
+                                                                                            </Link>
+                                                                                        </li>
+                                                                                    ) : ""
+                                                                                }
+                                                                            </ul>
+                                                                        </div>
+                                                                        <div className="flex items-center space-x-3">
+                                                                            <Select
+                                                                                disabled={isSelectingWinners}
+                                                                                value={selectedWinners[submission.id] || "No Prize"}
+                                                                                onValueChange={(value) => handleWinnerSelection(submission.id, value)}
+                                                                            >
+                                                                                <SelectTrigger className="w-32">
+                                                                                    <SelectValue placeholder="Select position" />
+                                                                                </SelectTrigger>
+                                                                                <SelectContent>
+                                                                                    {
+                                                                                        bounty.prizes.map((prize, index) => (
+                                                                                            <SelectItem key={index} value={prize.place}>{prize.place} Place</SelectItem>
+                                                                                        ))
+                                                                                    }
+                                                                                    <SelectItem value="No Prize">No Prize</SelectItem>
+                                                                                </SelectContent>
+                                                                            </Select>
+                                                                        </div>
+
                                                                     </div>
-                                                                    <p className="text-sm text-muted-foreground mb-1">
-                                                                        By {submission.user} • {submission.submittedAt}
-                                                                    </p>
-                                                                    <div className="flex items-center space-x-1">
-                                                                        <Star className="w-4 h-4 text-[#fdc700]" />
-                                                                        <span className="text-sm font-medium">{submission.votes} community votes</span>
-                                                                    </div>
-                                                                </div>
-                                                                <div className="flex items-center space-x-3">
-                                                                    <Select
-                                                                        value={selectedWinners[submission.id] || "No Prize"}
-                                                                        onValueChange={(value) => handleWinnerSelection(submission.id, value)}
-                                                                    >
-                                                                        <SelectTrigger className="w-32">
-                                                                            <SelectValue placeholder="Select position" />
-                                                                        </SelectTrigger>
-                                                                        <SelectContent>
-                                                                            <SelectItem value="1st">1st Place</SelectItem>
-                                                                            <SelectItem value="2nd">2nd Place</SelectItem>
-                                                                            <SelectItem value="3rd">3rd Place</SelectItem>
-                                                                            <SelectItem value="No Prize">No Prize</SelectItem>
-                                                                        </SelectContent>
-                                                                    </Select>
-                                                                    <Button size="sm" variant="outline">
-                                                                        View Details
-                                                                    </Button>
-                                                                </div>
-                                                            </div>
-                                                        </CardContent>
-                                                    </Card>
-                                                ))}
+                                                                    {
+                                                                        submission?.extra_info ? (
+                                                                            <p className="text-sm text-muted-foreground mt-5"><span className="font-semibold text-gray-700">Extra info:</span> {submission.extra_info}</p>
+                                                                        ) : ""
+                                                                    }
+                                                                </CardContent>
+                                                            </Card>
+                                                        ))
+                                                    ) : (
+                                                        <p className="text-center text-muted-foreground bg-gray-100 py-4 px-2 rounded-md">There are no submissions yet.</p>
+                                                    )
+                                                }
                                             </div>
 
                                             <div className="pt-4 border-t">
+
                                                 <Button
                                                     onClick={announceWinners}
                                                     className="bg-[#1c398e] hover:bg-[#1c398e]/90 text-white"
-                                                    disabled={Object.keys(selectedWinners).length === 0}
+                                                    disabled={Object.keys(selectedWinners).length === 0 || isSelectingWinners || !isEnded(bounty.end_date)}
                                                 >
                                                     <Trophy className="w-4 h-4 mr-2" />
-                                                    Announce Winners
+                                                    {
+                                                        isEnded(bounty.end_date) ? "Announce Winners" : "Bounty has not ended"
+                                                    }
                                                 </Button>
                                             </div>
+
+                                            {
+                                                isSelectingWinners ? (
+                                                    <p>Selecting winners...</p>
+                                                ) : ""
+                                            }
+
+                                            {
+                                                selectedWinnersSuccess ? (
+                                                    <div className="flex justify-start items-center gap-4">
+                                                        <Check />
+                                                        <p className="text-green-500 font-semibold">Winners successfully selected!</p>
+                                                    </div>
+                                                ) : ""
+                                            }
+
+                                            {
+                                                selectedWinnersError ? (
+                                                    <div className="flex justify-start items-center gap-4">
+                                                        <X />
+                                                        <p className="text-red-500 font-semibold">Error selecting winners: {selectedWinnersError}</p>
+                                                    </div>
+                                                ) : ""
+                                            }
                                         </CardContent>
                                     </Card>
                                 </TabsContent>

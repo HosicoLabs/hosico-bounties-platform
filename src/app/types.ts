@@ -32,4 +32,9 @@ export interface Bounty {
 
     submissions?: Submission[];
     submissions_total?: number;
+
+    winners?: {
+        position: string,
+        submission: Submission
+    }[]
 }
