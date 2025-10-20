@@ -9,7 +9,7 @@ export async function PUT(req: Request) {
 
         const { data, error } = await supabase.from("submissions").update([
             {
-                submission_link: submission.submission_link,
+                twitter_handle: submission.twitter_handle,
                 tweet_link: submission.tweet_link,
                 extra_info: submission.extra_info,
             }

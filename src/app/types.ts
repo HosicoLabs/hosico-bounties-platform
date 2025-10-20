@@ -14,8 +14,8 @@ export interface Submission {
     id: number;
     bounty_id: number;
     wallet_address: string;
-    submission_link: string;
-    tweet_link?: string | null;
+    twitter_handle: string;
+    tweet_link: string;
     extra_info?: string | null;
 }
 

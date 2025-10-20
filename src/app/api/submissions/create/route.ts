@@ -11,7 +11,7 @@ export async function POST(req: Request) {
             {
                 bounty_id: submission.bounty_id,
                 wallet_address: submission.wallet_address,
-                submission_link: submission.submission_link,
+                twitter_handle: submission.twitter_handle,
                 tweet_link: submission.tweet_link,
                 extra_info: submission.extra_info,
             }

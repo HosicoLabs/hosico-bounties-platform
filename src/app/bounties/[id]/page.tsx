@@ -33,7 +33,7 @@ export default function BountyDetailPage() {
     const [submission, setSubmission] = useState<Submission | null>(null);
 
     const [submissionLoading, setSubmissionLoading] = useState(false);
-    const [submissionLink, setSubmissionLink] = useState("");
+    const [twitterHandle, setTwitterHandle] = useState("");
     const [tweetLink, setTweetLink] = useState("");
     const [additionalInfo, setAdditionalInfo] = useState("");
     const [submissionSuccess, setSubmissionSuccess] = useState(false);
@@ -77,15 +77,15 @@ export default function BountyDetailPage() {
 
         try {
 
-            if (!submissionLink) {
-                throw new Error("Submission link is required");
+            if (!twitterHandle) {
+                throw new Error("Twitter Handle is required");
             }
 
             const submissionPayload = {
                 submission: {
                     bounty_id: Number(id),
                     wallet_address: wallet?.accounts[0]?.address,
-                    submission_link: submissionLink,
+                    twitter_handle: twitterHandle,
                     tweet_link: tweetLink || "",
                     extra_info: additionalInfo || "",
                 }
@@ -190,7 +190,7 @@ export default function BountyDetailPage() {
 
             if (data?.submission?.id) {
                 setSubmission(data.submission);
-                setSubmissionLink(data.submission.submission_link || "");
+                setTwitterHandle(data.submission.twitter_handle || "");
                 setTweetLink(data.submission.tweet_link || "");
                 setAdditionalInfo(data.submission.extra_info || "");
             }
@@ -362,38 +362,29 @@ export default function BountyDetailPage() {
                                                                                 <div className="flex-1">
                                                                                     <span className="text-xs text-gray-500 inline-block mb-2">Participant</span>
                                                                                     <div className="flex items-center space-x-3 mb-2">
-                                                                                        <h4 className="font-semibold text-[#1c398e]">{submission.wallet_address}</h4>
+                                                                                        <Link href={`https://x.com/${submission.twitter_handle}`} target="_blank" rel="noopener noreferrer" >
+                                                                                            <h4 className="font-semibold text-[#1c398e] underline">{submission.twitter_handle}</h4>
+                                                                                        </Link>
                                                                                         <Badge className="bg-[#fdc700] text-[#1c398e]">
 
                                                                                             {position} Place
                                                                                         </Badge>
                                                                                     </div>
-                                                                                    <ul className="flex flex-col md:flex-row md:space-x-4 space-y-1 md:space-y-0 text-sm text-muted-foreground">
+                                                                                    <ul className="mt-4 flex flex-col space-y-1 md:space-y-0 text-sm text-muted-foreground">
                                                                                         <li>
                                                                                             <Link
-                                                                                                href={submission.submission_link}
+                                                                                                href={submission.tweet_link}
                                                                                                 target="_blank"
                                                                                                 rel="noopener noreferrer"
                                                                                                 className="underline text-blue-600"
                                                                                             >
-                                                                                                Submission link
+                                                                                                Tweet link
                                                                                             </Link>
                                                                                         </li>
 
-                                                                                        {
-                                                                                            submission?.tweet_link ? (
-                                                                                                <li>
-                                                                                                    <Link
-                                                                                                        href={submission.tweet_link}
-                                                                                                        target="_blank"
-                                                                                                        rel="noopener noreferrer"
-                                                                                                        className="underline text-blue-600"
-                                                                                                    >
-                                                                                                        Tweet link
-                                                                                                    </Link>
-                                                                                                </li>
-                                                                                            ) : ""
-                                                                                        }
+                                                                                        <li>
+                                                                                            <p className="text-sm text-muted-foreground mt-5"><span className="font-semibold text-gray-700">Wallet address:</span> {submission.wallet_address}</p>
+                                                                                        </li>
                                                                                     </ul>
                                                                                 </div>
                                                                             </div>
@@ -448,26 +439,7 @@ export default function BountyDetailPage() {
                                                     <form onSubmit={handleSubmission} className="space-y-6">
 
                                                         <div>
-                                                            <Label htmlFor="submission-link" className="text-sm font-medium text-gray-900 flex items-center">
-                                                                Link to Your Submission <span className="text-red-500 ml-1">*</span>
-                                                            </Label>
-                                                            <p className="text-xs text-gray-500 mb-2">Make sure this link is accessible by everyone!</p>
-                                                            <div className="flex">
-                                                                <Input
-                                                                    id="submission-link"
-                                                                    placeholder="Add a link"
-                                                                    type="url"
-                                                                    value={submissionLink}
-                                                                    disabled={submissionLoading || isEnded(bounty.end_date)}
-                                                                    onChange={(e) => setSubmissionLink(e.target.value)}
-                                                                    className="focus:ring-2 focus:ring-[#1c398e] focus:border-[#1c398e]"
-                                                                    required
-                                                                />
-                                                            </div>
-                                                        </div>
-
-                                                        <div>
-                                                            <Label htmlFor="tweet-link" className="text-sm font-medium text-gray-900">Tweet Link</Label>
+                                                            <Label htmlFor="tweet-link" className="text-sm font-medium text-gray-900">Tweet Link <span className="text-red-500 ml-1">*</span></Label>
                                                             <p className="text-xs text-gray-500 mb-2">
                                                                 This helps sponsors discover (and maybe repost) your work on X!
                                                             </p>
@@ -480,9 +452,31 @@ export default function BountyDetailPage() {
                                                                     value={tweetLink}
                                                                     onChange={(e) => setTweetLink(e.target.value)}
                                                                     className="focus:ring-2 focus:ring-[#1c398e] focus:border-[#1c398e]"
+                                                                    required
                                                                 />
                                                             </div>
                                                         </div>
+
+                                                        <div>
+                                                            <Label htmlFor="twitter-handle" className="text-sm font-medium text-gray-900 flex items-center">
+                                                                Twitter Handle <span className="text-red-500 ml-1">*</span>
+                                                            </Label>
+                                                            <p className="text-xs text-gray-500 mb-2">Make sure this link is accessible by everyone!</p>
+                                                            <div className="flex">
+                                                                <Input
+                                                                    id="twitter-handle"
+                                                                    placeholder="Add your Twitter handle. e.g @Hosico_on_sol"
+                                                                    type="text"
+                                                                    value={twitterHandle}
+                                                                    disabled={submissionLoading || isEnded(bounty.end_date)}
+                                                                    onChange={(e) => setTwitterHandle(e.target.value)}
+                                                                    className="focus:ring-2 focus:ring-[#1c398e] focus:border-[#1c398e]"
+                                                                    required
+                                                                />
+                                                            </div>
+                                                        </div>
+
+
 
                                                         <div>
                                                             <Label htmlFor="additional-info" className="text-sm font-medium text-gray-900">Anything Else?</Label>
@@ -507,7 +501,7 @@ export default function BountyDetailPage() {
                                                         <Button
                                                             type="submit"
                                                             className={cn("w-full bg-[#ff6900] hover:bg-[#ff6900]/90 text-white font-medium", isEnded(bounty.end_date) || submissionLoading ? "opacity-50 cursor-not-allowed pointer-events-none" : "")}
-                                                            disabled={!submissionLink || submissionLoading || isEnded(bounty.end_date)}
+                                                            disabled={!twitterHandle || submissionLoading || isEnded(bounty.end_date)}
                                                         >
                                                             {submission?.id ? "Update Submission" : "Submit Entry"}
                                                         </Button>
@@ -590,7 +584,9 @@ export default function BountyDetailPage() {
                                                                         <div className="flex-1">
                                                                             <span className="text-xs text-gray-500 inline-block mb-2">Participant</span>
                                                                             <div className="flex items-center space-x-3 mb-2">
-                                                                                <h4 className="font-semibold text-[#1c398e]">{submission.wallet_address}</h4>
+                                                                                <Link href={`https://x.com/${submission.twitter_handle}`} target="_blank" rel="noopener noreferrer" >
+                                                                                    <h4 className="font-semibold text-[#1c398e] underline">{submission.twitter_handle}</h4>
+                                                                                </Link>
                                                                                 {selectedWinners[submission.id] && (
                                                                                     selectedWinners[submission.id] !== "No Prize" ? (
                                                                                         <Badge className="bg-[#fdc700] text-[#1c398e]">
@@ -601,32 +597,21 @@ export default function BountyDetailPage() {
                                                                                     ) : ""
                                                                                 )}
                                                                             </div>
-                                                                            <ul className="flex flex-col md:flex-row md:space-x-4 space-y-1 md:space-y-0 text-sm text-muted-foreground">
+                                                                            <ul className="mt-4 flex flex-col space-y-1 md:space-y-0 text-sm text-muted-foreground">
                                                                                 <li>
                                                                                     <Link
-                                                                                        href={submission.submission_link}
+                                                                                        href={submission.tweet_link}
                                                                                         target="_blank"
                                                                                         rel="noopener noreferrer"
                                                                                         className="underline text-blue-600"
                                                                                     >
-                                                                                        Submission link
+                                                                                        Tweet link
                                                                                     </Link>
                                                                                 </li>
 
-                                                                                {
-                                                                                    submission?.tweet_link ? (
-                                                                                        <li>
-                                                                                            <Link
-                                                                                                href={submission.tweet_link}
-                                                                                                target="_blank"
-                                                                                                rel="noopener noreferrer"
-                                                                                                className="underline text-blue-600"
-                                                                                            >
-                                                                                                Tweet link
-                                                                                            </Link>
-                                                                                        </li>
-                                                                                    ) : ""
-                                                                                }
+                                                                                <li>
+                                                                                    <p className="text-sm text-muted-foreground mt-5"><span className="font-semibold text-gray-700">Wallet address:</span> {submission.wallet_address}</p>
+                                                                                </li>
                                                                             </ul>
                                                                         </div>
                                                                         <div className="flex items-center space-x-3">
