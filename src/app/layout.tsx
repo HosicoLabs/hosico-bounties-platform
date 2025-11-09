@@ -17,6 +17,42 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Hosico Bounties Platform",
   description: "A platform to manage and participate in Hosico community bounties.",
+  generator: "Next.js",
+  keywords: ["solana", "bounties", "hosico"],
+  icons: [
+    { rel: "apple-touch-icon", url: "/images/hosico-portrait.png" },
+    { rel: "icon", url: "/images/hosico-portrait.png" },
+  ],
+  twitter: {
+    card: "summary_large_image",
+    site: "@Hosico_on_sol",
+    creator: "@Hosico_on_sol",
+    title: "Hosico Bounties",
+    description: "Earn HOSICO Tokens by Contributing to Our Community",
+    images: {
+      url: "/images/hosico-banner.png",
+      alt: "Hosico Bounties",
+      username: "@Hosico_on_sol",
+      width: 1920,
+      height: 1080,
+      type: "image/png",
+    },
+  },
+  openGraph: {
+    title: "Hosico Bounties",
+    description: "Earn HOSICO Tokens by Contributing to Our Community",
+    url: "bounties.hosico.cat",
+    type: "website",
+    locale: "en",
+    siteName: "Hosico Bounties",
+    images: {
+      url: "/images/hosico-banner.png",
+      alt: "Hosico Bounties",
+      width: 1920,
+      height: 1080,
+      type: "image/png",
+    },
+  },
 };
 
 export default function RootLayout({
