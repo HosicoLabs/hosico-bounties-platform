@@ -3,7 +3,6 @@
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { useState } from "react"
-import Image from "next/image"
 import { CategoryButtonsSkeleton } from "@/components/skeletons/category-buttons-skeleton"
 import { useBounties } from "@/components/bounties-provider"
 import { BountyCardsSkeletonGrid } from "@/components/skeletons/bounty-card-skeleton"
