@@ -30,7 +30,7 @@ export const metadata: Metadata = {
     title: "Hosico Bounties",
     description: "Earn HOSICO Tokens by Contributing to Our Community",
     images: {
-      url: "/images/hosico-banner.png",
+      url: "/images/hosico-thumbail.png",
       alt: "Hosico Bounties",
       username: "@Hosico_on_sol",
       width: 1920,
@@ -46,7 +46,7 @@ export const metadata: Metadata = {
     locale: "en",
     siteName: "Hosico Bounties",
     images: {
-      url: "/images/hosico-banner.png",
+      url: "/images/hosico-thumbail.png",
       alt: "Hosico Bounties",
       width: 1920,
       height: 1080,
