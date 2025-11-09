@@ -28,7 +28,7 @@ export const metadata: Metadata = {
     site: "@Hosico_on_sol",
     creator: "@Hosico_on_sol",
     title: "Hosico Bounties",
-    description: "Earn HOSICO Tokens by Contributing to Our Community",
+    description: "Earn $HOSICO Tokens by Contributing to Our Community",
     images: {
       url: "/images/hosico-thumbail.png",
       alt: "Hosico Bounties",

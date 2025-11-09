@@ -24,14 +24,17 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#1c398e]/20 to-[#1c398e]/10">
       <main className="container mx-auto px-4 py-8">
-        <Card className="mb-8 border-0 shadow-xl overflow-auto" style={{ backgroundColor: "#1c398e" }}>
+        <Card className="mb-8 border-0 shadow-xl overflow-auto py-0" style={{ backgroundColor: "#1c398e" }}>
           <CardContent className="p-0 relative">
-            <Image height={256} width={1504} src="/images/hosico-banner.png" alt="Hosico Banner" className="w-full h-64 object-cover opacity-80" />
+            <div 
+              className="w-full h-64 bg-cover bg-center opacity-80" 
+              style={{ backgroundImage: "url('/images/hosico-banner.png')" }}
+            />
             <div className="absolute inset-0 bg-gradient-to-r from-[#1c398e]/80 to-[#1c398e]/60"></div>
             <div className="absolute inset-0 p-8 flex flex-col lg:flex-row items-center justify-between">
               <div className="lg:w-2/3 mb-6 lg:mb-0 z-10">
                 <h2 className="text-3xl font-bold mb-4 text-white">
-                  Earn HOSICO Tokens by Contributing to Our Community
+                  Earn <span className="text-[#fdc700]">$</span>HOSICO Tokens by Contributing to Our Community
                 </h2>
                 <p className="text-lg opacity-90 text-white">
                   Join bounty challenges, showcase your skills, and get rewarded with HOSICO tokens. From creative

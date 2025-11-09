@@ -117,7 +117,7 @@ export default function AdminPanel() {
 
   if (!isAdmin) {
     return (
-      <p>404</p>
+      <p></p>
     )
   }
 
