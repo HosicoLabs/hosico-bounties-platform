@@ -13,16 +13,18 @@ export function SubmissionsTabContent({ bounty }: SubmissionsTabContentProps) {
                 <CardTitle className="text-[#1c398e]">All Submissions</CardTitle>
                 <CardDescription>View all submissions for this bounty</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent>
                 {bounty?.submissions && bounty?.submissions.length > 0 ? (
-                    bounty.submissions.map((submission) => (
-                        <SubmissionCard
-                            key={submission.id}
-                            submission={submission}
-                            showWalletAddress={false}
-                            showWinnerBadge={false}
-                        />
-                    ))
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {bounty.submissions.map((submission) => (
+                            <SubmissionCard
+                                key={submission.id}
+                                submission={submission}
+                                showWalletAddress={false}
+                                showWinnerBadge={false}
+                            />
+                        ))}
+                    </div>
                 ) : (
                     <p className="text-center text-muted-foreground bg-gray-100 py-4 px-2 rounded-md">
                         There are no submissions yet.

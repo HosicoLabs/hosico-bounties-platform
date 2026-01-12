@@ -86,38 +86,40 @@ export function SelectWinnersTabContent({ bounty, onWinnersAnnounced }: SelectWi
                     </div>
                 </div>
 
-                <div className="space-y-4">
-                    <h4 className="font-semibold text-[#1c398e]">Submissions</h4>
+                <div>
+                    <h4 className="font-semibold text-[#1c398e] mb-4">Submissions</h4>
 
                     {bounty?.submissions && bounty?.submissions.length > 0 ? (
-                        bounty.submissions.map((submission) => (
-                            <SubmissionCard
-                                key={submission.id}
-                                submission={submission}
-                                showWalletAddress={true}
-                                showWinnerBadge={true}
-                                winnerPosition={selectedWinners[submission.id]}
-                                additionalActions={
-                                    <Select
-                                        disabled={isSelectingWinners}
-                                        value={selectedWinners[submission.id] || "No Prize"}
-                                        onValueChange={(value) => handleWinnerSelection(submission.id, value)}
-                                    >
-                                        <SelectTrigger className="w-32">
-                                            <SelectValue placeholder="Select position" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {bounty.prizes.map((prize, index) => (
-                                                <SelectItem key={index} value={prize.place}>
-                                                    {prize.place} Place
-                                                </SelectItem>
-                                            ))}
-                                            <SelectItem value="No Prize">No Prize</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                }
-                            />
-                        ))
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {bounty.submissions.map((submission) => (
+                                <SubmissionCard
+                                    key={submission.id}
+                                    submission={submission}
+                                    showWalletAddress={true}
+                                    showWinnerBadge={true}
+                                    winnerPosition={selectedWinners[submission.id]}
+                                    additionalActions={
+                                        <Select
+                                            disabled={isSelectingWinners}
+                                            value={selectedWinners[submission.id] || "No Prize"}
+                                            onValueChange={(value) => handleWinnerSelection(submission.id, value)}
+                                        >
+                                            <SelectTrigger className="w-32">
+                                                <SelectValue placeholder="Select position" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {bounty.prizes.map((prize, index) => (
+                                                    <SelectItem key={index} value={prize.place}>
+                                                        {prize.place} Place
+                                                    </SelectItem>
+                                                ))}
+                                                <SelectItem value="No Prize">No Prize</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    }
+                                />
+                            ))}
+                        </div>
                     ) : (
                         <p className="text-center text-muted-foreground bg-gray-100 py-4 px-2 rounded-md">
                             There are no submissions yet.
