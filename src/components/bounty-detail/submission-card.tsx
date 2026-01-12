@@ -2,6 +2,8 @@ import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Submission } from "@/app/types";
+import { ExternalLink, AlertCircle } from "lucide-react";
+import { CachedTweet } from "./cached-tweet";
 
 interface SubmissionCardProps {
     submission: Submission;
@@ -11,6 +13,41 @@ interface SubmissionCardProps {
     additionalActions?: React.ReactNode;
 }
 
+function extractTweetId(url: string): string | null {
+    try {
+        const match = url.match(/(?:twitter\.com|x\.com)\/(?:#!\/)?(\w+)\/status(?:es)?\/(\d+)/);
+        return match ? match[2] : null;
+    } catch {
+        return null;
+    }
+}
+
+function TweetFallback({ url }: { url: string }) {
+    return (
+        <div className="mt-4 border border-amber-200 bg-amber-50 rounded-lg p-4">
+            <div className="flex items-start gap-3">
+                <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+                <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-amber-900 mb-1">
+                        Unable to load tweet
+                    </p>
+                    <p className="text-xs text-amber-700 mb-2">
+                        The tweet link appears to be invalid or the tweet may have been deleted.
+                    </p>
+                    <Link
+                        href={url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs text-blue-600 hover:underline inline-flex items-center gap-1"
+                    >
+                        View original link <ExternalLink className="w-3 h-3" />
+                    </Link>
+                </div>
+            </div>
+        </div>
+    );
+}
+
 export function SubmissionCard({
     submission,
     showWalletAddress = false,
@@ -18,6 +55,8 @@ export function SubmissionCard({
     winnerPosition,
     additionalActions
 }: SubmissionCardProps) {
+    const tweetId = extractTweetId(submission.tweet_link);
+
     return (
         <Card className="border border-[#1c398e]/20">
             <CardContent className="p-4">
@@ -41,9 +80,9 @@ export function SubmissionCard({
                                         href={submission.tweet_link}
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="underline text-blue-600 break-all"
+                                        className="underline text-blue-600 break-all inline-flex items-center gap-1"
                                     >
-                                        Tweet link
+                                        Tweet link <ExternalLink className="w-3 h-3" />
                                     </Link>
                                 </li>
                                 {showWalletAddress && (
@@ -54,6 +93,8 @@ export function SubmissionCard({
                                     </li>
                                 )}
                             </ul>
+
+
                         </div>
                         {additionalActions && (
                             <div className="flex items-center flex-shrink-0">
@@ -61,12 +102,20 @@ export function SubmissionCard({
                             </div>
                         )}
                     </div>
-                    
+
                     <p className="text-sm text-muted-foreground break-words">
                         <span className="font-semibold text-gray-700">Extra info:</span> {
                             submission.extra_info ? submission.extra_info : "N/A"
                         }
                     </p>
+
+                    {tweetId ? (
+                        <div className="[&>div]:mx-auto" data-theme="light">
+                            <CachedTweet id={tweetId} />
+                        </div>
+                    ) : (
+                        <TweetFallback url={submission.tweet_link} />
+                    )}
                 </div>
             </CardContent>
         </Card>
