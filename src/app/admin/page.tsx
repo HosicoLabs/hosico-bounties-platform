@@ -276,7 +276,14 @@ export default function AdminPanel() {
                       </div>
                       <div>
                         <Label htmlFor="duration">Duration (days)</Label>
-                        <Input required disabled={isSubmitting} id="duration" placeholder="Enter duration in days" type="date" onChange={(e) => setBountyEndDate(e.target.value)} />
+                        <Input 
+                          required 
+                          disabled={isSubmitting} 
+                          id="duration" 
+                          placeholder="Enter duration in days" 
+                          type="date" 
+                          min={new Date().toISOString().split('T')[0]} onChange={(e) => setBountyEndDate(e.target.value)} 
+                        />
                       </div>
                     </div>
 

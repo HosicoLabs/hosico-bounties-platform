@@ -42,6 +42,18 @@ export function EditTabContent({ bounty, onBountyUpdated }: EditTabContentProps)
   const [error, setError] = useState<string | null>(null)
   const [isSuccess, setIsSuccess] = useState(false)
 
+  const today = new Date().toISOString().split('T')[0]
+
+  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedDate = e.target.value
+    if (selectedDate < today) {
+      setError("End date cannot be in the past")
+      return
+    }
+    setError(null)
+    setBountyEndDate(selectedDate)
+  }
+
   useEffect(() => {
     if (bounty) {
       setBountyTitle(bounty.title || "")
@@ -54,7 +66,13 @@ export function EditTabContent({ bounty, onBountyUpdated }: EditTabContentProps)
       if (bounty.end_date) {
         const date = new Date(bounty.end_date)
         const formattedDate = date.toISOString().split('T')[0]
-        setBountyEndDate(formattedDate)
+        
+        if (formattedDate < today) {
+          setBountyEndDate("")
+          setError("Warning: This bounty's end date was in the past. Please select a new future date.")
+        } else {
+          setBountyEndDate(formattedDate)
+        }
       }
 
       if (bounty.prizes && bounty.prizes.length > 0) {
@@ -128,6 +146,10 @@ export function EditTabContent({ bounty, onBountyUpdated }: EditTabContentProps)
     try {
       if (!bountyTitle || !bountyDescription || !bountyRequirements || !bountyCategory || !bountyEndDate || bountyPrizes.length === 0) {
         throw new Error("Please fill in all required fields.")
+      }
+
+      if (bountyEndDate < today) {
+        throw new Error("End date cannot be in the past. Please select a future date.")
       }
 
       const tokenData = selectedToken === "custom" 
@@ -272,8 +294,9 @@ export function EditTabContent({ bounty, onBountyUpdated }: EditTabContentProps)
                   id="duration" 
                   placeholder="Enter end date" 
                   type="date" 
+                  min={today}
                   value={bountyEndDate}
-                  onChange={(e) => setBountyEndDate(e.target.value)} 
+                  onChange={handleDateChange} 
                 />
               </div>
             </div>

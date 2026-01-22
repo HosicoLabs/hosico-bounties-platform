@@ -24,14 +24,12 @@ export interface Bounty {
     title: string,
     description: string,
     requirements: string,
-    category: number,
+    category: BountyCategory | null,
     end_date: string,
     prizes: BountyPrize[],
     token_symbol?: string | null;
     token_address?: string | null;
     is_custom_token?: boolean | null;
-
-    category?: BountyCategory | null;
 
     submissions?: Submission[];
     submissions_total?: number;
