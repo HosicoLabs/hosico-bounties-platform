@@ -35,8 +35,6 @@ export async function GET(
   try {
     const tweet = await getCachedTweet(id);
     
-    console.log('Tweet response:', JSON.stringify(tweet, null, 2));
-    
     if (!tweet) {
       return NextResponse.json(
         { error: 'Tweet not found' },

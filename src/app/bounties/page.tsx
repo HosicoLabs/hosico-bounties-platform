@@ -23,7 +23,7 @@ export default function BountiesPage() {
       : inactiveBounties.filter((bounty) => bounty?.category?.name === selectedCategory)
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#1c398e]/5 to-[#ff6900]/5">
+    <div className="min-h-screen bg-linear-to-br from-[#1c398e]/5 to-[#ff6900]/5">
       <main className="container mx-auto px-4 py-8">
         <Tabs defaultValue="active" className="space-y-6">
           <TabsList className="grid w-full grid-cols-2 bg-white/80 backdrop-blur-sm">

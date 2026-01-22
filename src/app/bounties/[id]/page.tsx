@@ -15,6 +15,7 @@ import { DetailsTabContent } from "@/components/bounty-detail/details-tab-conten
 import { SubmitTabContent } from "@/components/bounty-detail/submit-tab-content";
 import { SubmissionsTabContent } from "@/components/bounty-detail/submissions-tab-content";
 import { SelectWinnersTabContent } from "@/components/bounty-detail/select-winners-tab-content";
+import { EditTabContent } from "@/components/bounty-detail/edit-tab-content";
 
 export default function BountyDetailPage() {
     const { id } = useParams<{ id: string }>();
@@ -106,7 +107,7 @@ export default function BountyDetailPage() {
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-[#1c398e]/5 to-[#ff6900]/5">
+        <div className="min-h-screen bg-linear-to-br from-[#1c398e]/5 to-[#ff6900]/5">
             <main className="container mx-auto px-4 py-8">
                 <BountyHeader />
 
@@ -115,12 +116,15 @@ export default function BountyDetailPage() {
                         <BountyOverviewCard bounty={bounty} />
 
                         <Tabs defaultValue="details" className="space-y-6">
-                            <TabsList className={`grid w-full ${isAdmin ? "grid-cols-4" : "grid-cols-3"} bg-white/80 backdrop-blur-sm`}>
+                            <TabsList className={`grid w-full ${isAdmin ? "grid-cols-5" : "grid-cols-3"} bg-white/80 backdrop-blur-sm`}>
                                 <TabsTrigger value="details" className="data-[state=active]:bg-[#ff6900] data-[state=active]:text-white">Details</TabsTrigger>
                                 <TabsTrigger value="submit" className="data-[state=active]:bg-[#ff6900] data-[state=active]:text-white">Submit Entry</TabsTrigger>
                                 <TabsTrigger value="submissions" className="data-[state=active]:bg-[#ff6900] data-[state=active]:text-white">Submissions</TabsTrigger>
                                 {isAdmin ? (
-                                    <TabsTrigger value="winners" className="data-[state=active]:bg-[#ff6900] data-[state=active]:text-white">Select Winners</TabsTrigger>
+                                    <>
+                                        <TabsTrigger value="edit" className="data-[state=active]:bg-[#ff6900] data-[state=active]:text-white">Edit Bounty</TabsTrigger>
+                                        <TabsTrigger value="winners" className="data-[state=active]:bg-[#ff6900] data-[state=active]:text-white">Select Winners</TabsTrigger>
+                                    </>
                                 ) : ""}
                             </TabsList>
 
@@ -143,12 +147,21 @@ export default function BountyDetailPage() {
                             </TabsContent>
 
                             {isAdmin && (
-                                <TabsContent value="winners">
-                                    <SelectWinnersTabContent
-                                        bounty={bounty}
-                                        onWinnersAnnounced={fetchBounty}
-                                    />
-                                </TabsContent>
+                                <>
+                                    <TabsContent value="edit">
+                                        <EditTabContent
+                                            bounty={bounty}
+                                            onBountyUpdated={fetchBounty}
+                                        />
+                                    </TabsContent>
+
+                                    <TabsContent value="winners">
+                                        <SelectWinnersTabContent
+                                            bounty={bounty}
+                                            onWinnersAnnounced={fetchBounty}
+                                        />
+                                    </TabsContent>
+                                </>
                             )}
                         </Tabs>
                     </div>

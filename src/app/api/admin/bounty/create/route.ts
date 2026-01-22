@@ -3,9 +3,23 @@ import { createClient } from "@/utils/supabase/server";
 
 export async function POST(req: Request) {
     try {
-        const { bounty }: { bounty: Bounty } = await req.json();
+        const { bounty, walletAddress }: { bounty: Bounty; walletAddress: string } = await req.json();
+
+        if (!walletAddress) {
+            return new Response(JSON.stringify({ error: "Wallet address is required" }), { status: 400 });
+        }
 
         const supabase = await createClient();
+
+        const { data: adminWallet, error: adminError } = await supabase
+            .from("admin-wallet-list")
+            .select("wallet_address")
+            .eq("wallet_address", walletAddress)
+            .single();
+
+        if (adminError || !adminWallet) {
+            return new Response(JSON.stringify({ error: "Unauthorized - Admin access required" }), { status: 403 });
+        }
 
         const { data, error } = await supabase.from("bounties").insert([
             {

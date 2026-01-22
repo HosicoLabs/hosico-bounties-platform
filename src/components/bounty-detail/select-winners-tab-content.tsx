@@ -6,6 +6,7 @@ import { Crown, Trophy, Check, X } from "lucide-react";
 import { isEnded } from "@/utils/bounties";
 import { Bounty } from "@/app/types";
 import { SubmissionCard } from "./submission-card";
+import { useSolana } from "@/components/solana/use-solana";
 
 interface SelectWinnersTabContentProps {
     bounty: Bounty;
@@ -17,6 +18,7 @@ export function SelectWinnersTabContent({ bounty, onWinnersAnnounced }: SelectWi
     const [isSelectingWinners, setIsSelectingWinners] = useState(false);
     const [selectedWinnersSuccess, setSelectedWinnersSuccess] = useState(false);
     const [selectedWinnersError, setSelectedWinnersError] = useState("");
+    const { wallet } = useSolana()
 
     const handleWinnerSelection = (submissionId: number, position: string) => {
         setSelectedWinners(prev => {
@@ -33,6 +35,12 @@ export function SelectWinnersTabContent({ bounty, onWinnersAnnounced }: SelectWi
     const announceWinners = async () => {
         setIsSelectingWinners(true);
         try {
+            const walletAddress = wallet?.accounts?.[0]?.address
+
+            if (!walletAddress) {
+                throw new Error("Wallet not connected")
+            }
+
             const data = await (await fetch("/api/admin/bounty/select-winners", {
                 method: "PUT",
                 headers: {
@@ -41,6 +49,7 @@ export function SelectWinnersTabContent({ bounty, onWinnersAnnounced }: SelectWi
                 body: JSON.stringify({
                     bountyId: Number(bounty.id),
                     winners: selectedWinners,
+                    walletAddress,
                 }),
             })).json();
 

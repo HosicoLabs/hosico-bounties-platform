@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Plus, X } from "lucide-react"
 import { useAdmin } from "@/components/admin/use-admin"
 import { useBounties } from "@/components/bounties-provider"
+import { useSolana } from "@/components/solana/use-solana"
 import { cn } from "@/lib/utils"
 import { BountyCard } from "@/components/bounty-card"
 import { BountyCardSkeleton } from "@/components/skeletons/bounty-card-skeleton"
@@ -18,6 +19,7 @@ import { BountyCardSkeleton } from "@/components/skeletons/bounty-card-skeleton"
 export default function AdminPanel() {
   const { isAdmin } = useAdmin()
   const { categories, activeBounties, bountiesLoading, refreshBounties } = useBounties()
+  const { wallet } = useSolana()
 
   const [bountyTitle, setBountyTitle] = useState("")
   const [bountyDescription, setBountyDescription] = useState("")
@@ -109,6 +111,12 @@ export default function AdminPanel() {
             is_custom_token: false,
           }
 
+      const walletAddress = wallet?.accounts?.[0]?.address
+
+      if (!walletAddress) {
+        throw new Error("Wallet not connected")
+      }
+
       const formData = JSON.stringify({
         bounty: {
           title: bountyTitle,
@@ -118,7 +126,8 @@ export default function AdminPanel() {
           end_date: bountyEndDate,
           prizes: bountyPrizes,
           ...tokenData,
-        }
+        },
+        walletAddress,
       })
 
       setIsSubmitting(true)
@@ -161,7 +170,7 @@ export default function AdminPanel() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#1c398e]/5 to-[#ff6900]/5">
+    <div className="min-h-screen bg-linear-to-br from-[#1c398e]/5 to-[#ff6900]/5">
       <main className="container mx-auto px-4 py-8">
         <Tabs defaultValue="bounties" className="space-y-6">
           <TabsList className="grid w-full grid-cols-2 bg-white/80 backdrop-blur-sm">
@@ -344,7 +353,7 @@ export default function AdminPanel() {
                         {bountyPrizes.map((position, index) => (
                           <div key={index} className="flex items-center gap-4 p-3 bg-gray-50 rounded-lg">
                             <div className="flex items-center space-x-2 min-w-0 flex-1">
-                              <div className="w-8 h-8 bg-[#fdc700] rounded-full flex items-center justify-center flex-shrink-0">
+                              <div className="w-8 h-8 bg-[#fdc700] rounded-full flex items-center justify-center shrink-0">
                                 <span className="text-sm font-bold text-[#1c398e]">{position.place}</span>
                               </div>
                               <div className="flex-1">
@@ -369,7 +378,7 @@ export default function AdminPanel() {
                                 onClick={() => removeWinnerPosition(index)}
                                 size="sm"
                                 variant="outline"
-                                className="flex-shrink-0"
+                                className="shrink-0"
                                 disabled={isSubmitting}
                               >
                                 <X className="w-4 h-4" />

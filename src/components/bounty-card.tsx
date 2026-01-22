@@ -21,6 +21,7 @@ import {
     AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useBounties } from "./bounties-provider";
+import { useSolana } from "./solana/use-solana";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -32,16 +33,23 @@ export function BountyCard({ bounty, isAdmin = false }: Props) {
     const [isDeleting, setIsDeleting] = useState(false);
     const [isOpen, setIsOpen] = useState(false);
     const { refreshBounties } = useBounties()
+    const { wallet } = useSolana()
 
     const deleteBounty = async () => {
         try {
             setIsDeleting(true);
+            const walletAddress = wallet?.accounts?.[0]?.address
+
+            if (!walletAddress) {
+                throw new Error("Wallet not connected")
+            }
+
             const response = await fetch("/api/admin/bounty/delete", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                 },
-                body: JSON.stringify({ bountyId: bounty.id }),
+                body: JSON.stringify({ bountyId: bounty.id, walletAddress }),
             });
 
             if (!response.ok) {

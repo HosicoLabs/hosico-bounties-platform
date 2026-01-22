@@ -7,3 +7,4 @@ export { DetailsTabContent } from "./details-tab-content";
 export { SubmitTabContent } from "./submit-tab-content";
 export { SubmissionsTabContent } from "./submissions-tab-content";
 export { SelectWinnersTabContent } from "./select-winners-tab-content";
+export { EditTabContent } from "./edit-tab-content";
