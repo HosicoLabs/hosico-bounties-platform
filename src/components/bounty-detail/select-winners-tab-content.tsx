@@ -79,7 +79,7 @@ export function SelectWinnersTabContent({ bounty, onWinnersAnnounced }: SelectWi
                             <div key={index} className="flex items-center justify-between p-2 bg-white rounded border">
                                 <span className="font-medium">{prize.place} Place</span>
                                 <span className="font-bold text-[#ff6900]">
-                                    {Number.parseFloat(prize.prize.toString()).toLocaleString()} HOSICO
+                                    {Number.parseFloat(prize.prize.toString()).toLocaleString()} {bounty?.token_symbol || "HOSICO"}
                                 </span>
                             </div>
                         ))}

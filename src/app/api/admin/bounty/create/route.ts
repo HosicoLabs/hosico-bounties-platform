@@ -15,6 +15,9 @@ export async function POST(req: Request) {
                 end_date: bounty.end_date,
                 category: bounty.category,
                 prizes: bounty.prizes,
+                token_symbol: bounty.token_symbol,
+                token_address: bounty.token_address,
+                is_custom_token: bounty.is_custom_token,
             }
         ]);
 

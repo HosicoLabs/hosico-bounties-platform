@@ -32,7 +32,7 @@ export function DetailsTabContent({ bounty }: DetailsTabContentProps) {
                     </ul>
                 </div>
 
-                <PrizeDistribution prizes={bounty.prizes} />
+                <PrizeDistribution prizes={bounty.prizes} tokenSymbol={bounty?.token_symbol} />
 
                 {!isEnded(bounty?.end_date) ? (
                     <p className="text-center text-muted-foreground bg-gray-100 py-4 px-2 rounded-md">

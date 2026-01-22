@@ -2,9 +2,10 @@ import { Bounty } from "@/app/types";
 
 interface PrizeDistributionProps {
     prizes: Bounty["prizes"];
+    tokenSymbol?: string | null;
 }
 
-export function PrizeDistribution({ prizes }: PrizeDistributionProps) {
+export function PrizeDistribution({ prizes, tokenSymbol }: PrizeDistributionProps) {
     return (
         <div>
             <h4 className="font-semibold text-[#1c398e] mb-3">Prize Distribution</h4>
@@ -16,7 +17,7 @@ export function PrizeDistribution({ prizes }: PrizeDistributionProps) {
                                 <span className="text-sm font-bold text-[#1c398e]">{prize.place}</span>
                             </div>
                         </div>
-                        <span className="font-bold text-[#ff6900]">{Number(prize.prize).toLocaleString()} HOSICO</span>
+                        <span className="font-bold text-[#ff6900]">{Number(prize.prize).toLocaleString()} {tokenSymbol || "HOSICO"}</span>
                     </div>
                 ))}
             </div>

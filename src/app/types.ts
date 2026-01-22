@@ -27,6 +27,9 @@ export interface Bounty {
     category_id: number,
     end_date: string,
     prizes: BountyPrize[],
+    token_symbol?: string | null;
+    token_address?: string | null;
+    is_custom_token?: boolean | null;
 
     category?: BountyCategory | null;
 

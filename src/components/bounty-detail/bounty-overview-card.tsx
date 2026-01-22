@@ -1,9 +1,10 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Coins, Clock, FileText } from "lucide-react";
+import { Coins, Clock, FileText, ExternalLink } from "lucide-react";
 import { calculateTotalPrize, isEnded } from "@/utils/bounties";
 import { cn } from "@/lib/utils";
 import { Bounty } from "@/app/types";
+import Link from "next/link";
 
 interface BountyOverviewCardProps {
     bounty: Bounty;
@@ -17,17 +18,17 @@ export function BountyOverviewCard({ bounty }: BountyOverviewCardProps) {
                     <div className="flex-1">
                         <div className="flex items-center space-x-3 mb-3">
                             <Badge variant="outline" className="border-[#1c398e] text-[#1c398e]">
-                                {bounty.category?.name ?? "—"}
+                                {bounty?.category?.name ?? "—"}
                             </Badge>
                             <Badge className={cn(isEnded(bounty?.end_date) ? "border-[#1c398e] text-[#1c398e] bg-transparent" : "bg-[#ff6900] text-white border-[#ff6900]")}>
-                                {isEnded(bounty.end_date) ? "Finalized" : "Active"}
+                                {isEnded(bounty?.end_date) ? "Finalized" : "Active"}
                             </Badge>
                         </div>
                         <CardTitle className="text-2xl text-[#1c398e] text-balance mb-2">
-                            {bounty.title}
+                            {bounty?.title}
                         </CardTitle>
                         <CardDescription className="text-base text-pretty">
-                            {bounty.description}
+                            {bounty?.description}
                         </CardDescription>
                     </div>
                 </div>
@@ -39,23 +40,34 @@ export function BountyOverviewCard({ bounty }: BountyOverviewCardProps) {
                         <div>
                             <p className="text-sm text-muted-foreground">Total Reward</p>
                             <p className="font-bold text-[#ff6900]">
-                                {calculateTotalPrize(bounty.prizes)} HOSICO
+                                {calculateTotalPrize(bounty?.prizes)} {bounty?.token_symbol || "HOSICO"}
                             </p>
+                            {bounty?.token_address && (
+                                <Link
+                                    href={`https://solscan.io/token/${bounty?.token_address}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-xs text-[#1c398e] hover:underline flex items-center space-x-1 mt-1"
+                                >
+                                    <span>View Token</span>
+                                    <ExternalLink className="w-3 h-3" />
+                                </Link>
+                            )}
                         </div>
                     </div>
                     <div className="flex items-center space-x-2">
                         <FileText className="w-5 h-5 text-muted-foreground" />
                         <div>
                             <p className="text-sm text-muted-foreground">Submissions</p>
-                            <p className="font-bold">{bounty.submissions && bounty.submissions.length > 0 ? bounty.submissions?.length : 0}</p>
+                            <p className="font-bold">{bounty?.submissions && bounty?.submissions.length > 0 ? bounty?.submissions?.length : 0}</p>
                         </div>
                     </div>
                     <div className="flex items-center space-x-2">
-                        <Clock className={cn(isEnded(bounty.end_date) ? "w-5 h-5 text-red-500" : "text-[#ff6900]")} />
+                        <Clock className={cn(isEnded(bounty?.end_date) ? "w-5 h-5 text-red-500" : "text-[#ff6900]")} />
                         <div>
                             <p className="text-sm text-muted-foreground">Ends</p>
-                            <p className={cn("font-bold", isEnded(bounty.end_date) ? "text-red-500" : "text-[#ff6900]")}>
-                                {new Date(bounty.end_date).toLocaleDateString()}
+                            <p className={cn("font-bold", isEnded(bounty?.end_date) ? "text-red-500" : "text-[#ff6900]")}>
+                                {new Date(bounty?.end_date).toLocaleDateString()}
                             </p>
                         </div>
                     </div>

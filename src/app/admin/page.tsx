@@ -30,6 +30,10 @@ export default function AdminPanel() {
     { place: "3rd", prize: "" },
   ])
 
+  const [selectedToken, setSelectedToken] = useState("hosico")
+  const [customTokenName, setCustomTokenName] = useState("")
+  const [customTokenAddress, setCustomTokenAddress] = useState("")
+
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [isSuccess, setIsSuccess] = useState(false)
@@ -60,6 +64,13 @@ export default function AdminPanel() {
     return "th"
   }
 
+  const getTokenSymbol = () => {
+    if (selectedToken === "custom") return customTokenName || "TOKEN"
+    if (selectedToken === "sol") return "SOL"
+    if (selectedToken === "usdc") return "USDC"
+    return "HOSICO"
+  }
+
   const calculateTotalPrize = () => {
     return bountyPrizes.reduce((total, position) => {
       return total + (Number.parseFloat(position.prize) || 0)
@@ -74,6 +85,30 @@ export default function AdminPanel() {
         throw new Error("Please fill in all required fields.")
       }
 
+      const tokenData = selectedToken === "custom" 
+        ? {
+            token_symbol: customTokenName,
+            token_address: customTokenAddress,
+            is_custom_token: true,
+          }
+        : selectedToken === "hosico"
+        ? {
+            token_symbol: "HOSICO",
+            token_address: "Dx2bQe2UPv4k3BmcW8G2KhaL5oKsxduM5XxLSV3Sbonk",
+            is_custom_token: false,
+          }
+        : selectedToken === "sol"
+        ? {
+            token_symbol: "SOL",
+            token_address: "So11111111111111111111111111111111111111111",
+            is_custom_token: false,
+          }
+        : {
+            token_symbol: "USDC",
+            token_address: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+            is_custom_token: false,
+          }
+
       const formData = JSON.stringify({
         bounty: {
           title: bountyTitle,
@@ -82,6 +117,7 @@ export default function AdminPanel() {
           category: bountyCategory,
           end_date: bountyEndDate,
           prizes: bountyPrizes,
+          ...tokenData,
         }
       })
 
@@ -107,6 +143,9 @@ export default function AdminPanel() {
       setBountyCategory(null)
       setBountyEndDate("")
       setBountyPrizes([{ place: "1st", prize: "" }, { place: "2nd", prize: "" }, { place: "3rd", prize: "" }])
+      setSelectedToken("hosico")
+      setCustomTokenName("")
+      setCustomTokenAddress("")
       await refreshBounties()
     } catch (err) {
       console.error("Failed to create bounty", err)
@@ -231,6 +270,54 @@ export default function AdminPanel() {
                         <Input required disabled={isSubmitting} id="duration" placeholder="Enter duration in days" type="date" onChange={(e) => setBountyEndDate(e.target.value)} />
                       </div>
                     </div>
+
+                    <div className="space-y-4">
+                      <div>
+                        <Label htmlFor="token">Reward Token</Label>
+                        <Select 
+                          disabled={isSubmitting} 
+                          value={selectedToken} 
+                          onValueChange={(value) => setSelectedToken(value)}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select reward token" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="hosico">Hosico (HOSICO)</SelectItem>
+                            <SelectItem value="sol">Solana (SOL)</SelectItem>
+                            <SelectItem value="usdc">USD Coin (USDC)</SelectItem>
+                            <SelectItem value="custom">Custom Token</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      {selectedToken === "custom" && (
+                        <div className="space-y-4 p-4 bg-gray-50 rounded-lg border border-[#1c398e]/20">
+                          <div>
+                            <Label htmlFor="customTokenName">Custom Token Name</Label>
+                            <Input
+                              id="customTokenName"
+                              placeholder="e.g., BONK, WIF"
+                              required
+                              disabled={isSubmitting}
+                              value={customTokenName}
+                              onChange={(e) => setCustomTokenName(e.target.value)}
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="customTokenAddress">Custom Token Address</Label>
+                            <Input
+                              id="customTokenAddress"
+                              placeholder="e.g., DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263"
+                              required
+                              disabled={isSubmitting}
+                              value={customTokenAddress}
+                              onChange={(e) => setCustomTokenAddress(e.target.value)}
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   <Card className="border border-[#1c398e]/20">
@@ -262,7 +349,7 @@ export default function AdminPanel() {
                               </div>
                               <div className="flex-1">
                                 <Label htmlFor={`prize-${index}`} className="text-sm">
-                                  {position.place} Place Prize (HOSICO)
+                                  {position.place} Place Prize ({getTokenSymbol()})
                                 </Label>
                                 <Input
                                   id={`prize-${index}`}
@@ -295,7 +382,7 @@ export default function AdminPanel() {
                         <div className="flex items-center justify-between">
                           <Label className="text-base font-semibold">Total Prize Pool</Label>
                           <span className="text-lg font-bold text-[#ff6900]">
-                            {calculateTotalPrize().toLocaleString()} HOSICO
+                            {calculateTotalPrize().toLocaleString()} {getTokenSymbol()}
                           </span>
                         </div>
                       </div>

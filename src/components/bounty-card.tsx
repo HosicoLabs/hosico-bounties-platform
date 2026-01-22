@@ -82,7 +82,7 @@ export function BountyCard({ bounty, isAdmin = false }: Props) {
                             <div key={index} className="flex items-center space-x-2">
                                 <span className="font-medium">{prize.place}:</span>
                                 <span className="font-bold text-[#ff6900]">
-                                    {Number.parseFloat(prize.prize.toString()).toLocaleString()} HOSICO
+                                    {Number.parseFloat(prize.prize.toString()).toLocaleString()} {bounty?.token_symbol || "HOSICO"}
                                 </span>
                             </div>
                         ))}
@@ -92,7 +92,7 @@ export function BountyCard({ bounty, isAdmin = false }: Props) {
                         <Coins className="w-4 h-4 text-[#fdc700]" />
                         <span className="font-medium">Total Prize:</span>
                         <span className="font-bold text-[#ff6900]">
-                            {calculateTotalPrize(bounty?.prizes)} HOSICO
+                            {calculateTotalPrize(bounty?.prizes)} {bounty?.token_symbol || "HOSICO"}
                         </span>
                     </div>
 
